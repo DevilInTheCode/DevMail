@@ -21,9 +21,10 @@
 
 ## Скриншоты
 
-<img width="1080" height="2340" alt="241859" src="https://github.com/user-attachments/assets/7f326b33-8386-4817-a8d8-687cd531879c" />
 <img width="1080" height="2202" alt="241858" src="https://github.com/user-attachments/assets/e1f00cdf-c813-41d9-8d60-249f671a9a01" />
 <img width="1080" height="2202" alt="241855" src="https://github.com/user-attachments/assets/49042c5b-1a3a-4732-ae0f-3861e9c5da58" />
+<img width="1080" height="2202" alt="241863" src="https://github.com/user-attachments/assets/72c92b77-2c88-4405-8f93-85d4f4672e00" />
+
 
 
 ## Сборка
