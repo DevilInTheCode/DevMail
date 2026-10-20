@@ -50,13 +50,36 @@ public class ShareActivity extends Activity {
         Intent in = getIntent();
         text = in.getStringExtra(Intent.EXTRA_TEXT);
         subject = in.getStringExtra(Intent.EXTRA_SUBJECT);
-        collectStreams(in);
-        if (paths.isEmpty() && (text == null || text.trim().length() == 0)) {
+        final ArrayList<Uri> uris = streams(in);
+        if (uris.isEmpty() && (text == null || text.trim().length() == 0)) {
             Toast.makeText(this, L.t("Нечего отправить"), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
+        TextView summary = (TextView) findViewById(R.id.shareSummary);
+        if (uris.isEmpty()) {
+            setup();
+        } else {
+            summary.setText(L.t("Готовим файл…"));
+            new Thread(() -> {
+                for (Uri u : uris) {
+                    File f = Util.copyToCache(ShareActivity.this, u, "send");
+                    if (f != null && f.length() > 0) paths.add(f.getAbsolutePath());
+                }
+                runOnUiThread(() -> {
+                    if (paths.isEmpty() && (text == null || text.trim().length() == 0)) {
+                        Toast.makeText(this, L.t("Нечего отправить"), Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        setup();
+                    }
+                });
+            }).start();
+        }
+    }
+
+    private void setup() {
         TextView summary = (TextView) findViewById(R.id.shareSummary);
         summary.setText(summaryText());
 
@@ -94,20 +117,22 @@ public class ShareActivity extends Activity {
         filter();
     }
 
-    private void collectStreams(Intent in) {
+    private ArrayList<Uri> streams(Intent in) {
         ArrayList<Uri> uris = new ArrayList<Uri>();
         Object stream = in.getParcelableExtra(Intent.EXTRA_STREAM);
         if (stream instanceof Uri) uris.add((Uri) stream);
+        if (stream instanceof ArrayList) {
+            for (Object o : (ArrayList<?>) stream) {
+                if (o instanceof Uri) uris.add((Uri) o);
+            }
+        }
         Object many = in.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         if (many instanceof ArrayList) {
             for (Object o : (ArrayList<?>) many) {
                 if (o instanceof Uri) uris.add((Uri) o);
             }
         }
-        for (Uri u : uris) {
-            File f = Util.copyToCache(this, u, "send");
-            if (f != null && f.length() > 0) paths.add(f.getAbsolutePath());
-        }
+        return uris;
     }
 
     private String summaryText() {

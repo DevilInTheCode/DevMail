@@ -132,6 +132,7 @@ public final class L {
         DICT.put("Нечего отправить", "Nothing to send");
         DICT.put("Файл: ", "File: ");
         DICT.put("Файлов: ", "Files: ");
+        DICT.put("Готовим файл…", "Preparing file…");
         DICT.put("Аккаунтов пока нет.\nДобавьте ящик, чтобы получать почту.",
                 "No accounts yet.\nAdd a mailbox to receive mail.");
         DICT.put("Очистить кеш вложений", "Clear attachment cache");
