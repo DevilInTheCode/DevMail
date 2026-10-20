@@ -19,6 +19,13 @@
 - Очистка кеша вложений в настройках.
 - Темы «Ночь», «День», «Киберпанк»; русский и английский языки.
 
+## Скриншоты
+
+<img width="1080" height="2340" alt="241859" src="https://github.com/user-attachments/assets/7f326b33-8386-4817-a8d8-687cd531879c" />
+<img width="1080" height="2202" alt="241858" src="https://github.com/user-attachments/assets/e1f00cdf-c813-41d9-8d60-249f671a9a01" />
+<img width="1080" height="2202" alt="241855" src="https://github.com/user-attachments/assets/49042c5b-1a3a-4732-ae0f-3861e9c5da58" />
+
+
 ## Сборка
 
 Gradle не используется, сборка идёт напрямую инструментами Android SDK.
