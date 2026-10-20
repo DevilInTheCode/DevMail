@@ -1,4 +1,4 @@
-Simple multiacount android email chat client like whatsapp od delta chat without encryption.
+Simple multiacount android email chat client like whatsapp or delta chat without encryption.
 Russian and english languages.
 Three taps on version in settings to disable debug in chat list.
 
