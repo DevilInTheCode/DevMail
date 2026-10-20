@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- НОЧНАЯ -->
+    <style name="Theme.DevMail.Night" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B141A</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="c_bg">#0B141A</item>
+        <item name="c_bar">#1F2C34</item>
+        <item name="c_bubble_in">#EB202C33</item>
+        <item name="c_bubble_out">#EB005C4B</item>
+        <item name="c_text">#E9EDEF</item>
+        <item name="c_text2">#8696A0</item>
+        <item name="c_accent">#00C2A8</item>
+        <item name="c_accent2">#00A884</item>
+        <item name="c_ripple">#22FFFFFF</item>
+        <item name="c_on_accent">#0B141A</item>
+        <item name="c_badge">#25D366</item>
+        <item name="c_divider">#2A3942</item>
+        <item name="c_field">#2A3942</item>
+        <item name="c_chip">#1F2C34</item>
+        <item name="c_stroke">#00000000</item>
+        <item name="c_danger">#F15C6D</item>
+    </style>
+
+    <!-- ДНЕВНАЯ -->
+    <style name="Theme.DevMail.Day" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#EFEAE2</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="c_bg">#EFEAE2</item>
+        <item name="c_bar">#FFFFFF</item>
+        <item name="c_bubble_in">#F2FFFFFF</item>
+        <item name="c_bubble_out">#EBD9FDD3</item>
+        <item name="c_text">#111B21</item>
+        <item name="c_text2">#667781</item>
+        <item name="c_accent">#00C2A8</item>
+        <item name="c_accent2">#00A884</item>
+        <item name="c_ripple">#22FFFFFF</item>
+        <item name="c_on_accent">#FFFFFF</item>
+        <item name="c_badge">#25D366</item>
+        <item name="c_divider">#E4E0D8</item>
+        <item name="c_field">#FFFFFF</item>
+        <item name="c_chip">#FFFFFF</item>
+        <item name="c_stroke">#00000000</item>
+        <item name="c_danger">#D32F2F</item>
+    </style>
+
+    <!-- КИБЕРПАНК -->
+    <style name="Theme.DevMail.Cyber" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#05010B</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="c_bg">#05010B</item>
+        <item name="c_bar">#12002B</item>
+        <item name="c_bubble_in">#EB16082E</item>
+        <item name="c_bubble_out">#EB2B0A48</item>
+        <item name="c_text">#E6FBFF</item>
+        <item name="c_text2">#A98BFF</item>
+        <item name="c_accent">#FF00E5</item>
+        <item name="c_accent2">#00E0FF</item>
+        <item name="c_ripple">#33FF00E5</item>
+        <item name="c_on_accent">#05010B</item>
+        <item name="c_badge">#00FFF0</item>
+        <item name="c_divider">#3A1C63</item>
+        <item name="c_field">#16082E</item>
+        <item name="c_chip">#1D0A38</item>
+        <item name="c_stroke">#5A1FA8</item>
+        <item name="c_danger">#FF3B6B</item>
+    </style>
+
+</resources>

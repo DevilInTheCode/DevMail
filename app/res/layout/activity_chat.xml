@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/c_bg">
+
+    <LinearLayout style="@style/Header">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_back" />
+
+        <FrameLayout
+            android:id="@+id/avatarBox"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="2dp"
+            android:clickable="true">
+
+            <TextView
+                android:id="@+id/avatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/avatar_bg" />
+
+            <ImageView
+                android:id="@+id/avatarImg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/peerInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp"
+            android:clickable="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/peerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/c_text" />
+
+            <TextView
+                android:id="@+id/peerEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="middle"
+                android:textSize="12sp"
+                android:textColor="?attr/c_text2" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnChatSearch"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_search" />
+
+        <ImageView
+            android:id="@+id/btnChatMenu"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_more" />
+
+        <ImageView
+            android:id="@+id/btnCopyAll"
+            style="@style/IconBtnPlain"
+            android:src="@drawable/ic_copy"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/c_divider" />
+
+    <LinearLayout
+        android:id="@+id/chatSearchBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/c_bar"
+        android:paddingLeft="12dp"
+        android:paddingRight="6dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/chatSearchInput"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:background="@drawable/field_bg"
+            android:hint="@string/search_chat_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:textSize="14sp"
+            android:textColor="?attr/c_text"
+            android:textColorHint="?attr/c_text2" />
+
+        <TextView
+            android:id="@+id/chatSearchCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:minWidth="34dp"
+            android:gravity="center"
+            android:textSize="11sp"
+            android:textColor="?attr/c_text2" />
+
+        <ImageView
+            android:id="@+id/btnSearchPrev"
+            android:layout_width="34dp"
+            android:layout_height="42dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_arrow_up"
+            android:tint="?attr/c_text" />
+
+        <ImageView
+            android:id="@+id/btnSearchNext"
+            android:layout_width="34dp"
+            android:layout_height="42dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_arrow_down"
+            android:tint="?attr/c_text" />
+
+        <ImageView
+            android:id="@+id/btnSearchClose"
+            android:layout_width="36dp"
+            android:layout_height="42dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_close"
+            android:tint="?attr/c_text2" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/listMessages"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:scrollbars="none"
+            android:clipToPadding="false"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:stackFromBottom="true" />
+
+        <TextView
+            android:id="@+id/floatDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/date_chip"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:alpha="0"
+            android:enabled="false"
+            android:translationY="-6dp"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="?attr/c_text2" />
+
+        <FrameLayout
+            android:id="@+id/btnDown"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="3dp"
+            android:background="@drawable/send_bg"
+            android:alpha="0"
+            android:visibility="invisible">
+
+            <ImageView
+                android:id="@+id/btnDownIcon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_arrow_down"
+                android:tint="?attr/c_on_accent" />
+
+            <TextView
+                android:id="@+id/btnDownCount"
+                android:layout_width="wrap_content"
+                android:layout_height="18dp"
+                android:layout_gravity="top|end"
+                android:minWidth="18dp"
+                android:gravity="center"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:background="@drawable/badge_bg"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="?attr/c_on_accent"
+                android:visibility="gone" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/replyBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/c_bar"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="3dp"
+            android:layout_height="34dp"
+            android:background="?attr/c_accent" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/replyAuthor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="?attr/c_accent" />
+
+            <TextView
+                android:id="@+id/replyText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textSize="12sp"
+                android:textColor="?attr/c_text2" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnCancelReply"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_close"
+            android:tint="?attr/c_text2" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/composerRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:background="?attr/c_bar"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:id="@+id/btnAttach"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
+            android:background="@drawable/icon_btn_bg"
+            android:src="@drawable/ic_attach"
+            android:tint="?attr/c_text2" />
+
+        <EditText
+            android:id="@+id/input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/pill_bg"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:hint="@string/hint_message"
+            android:textSize="15sp"
+            android:textColor="?attr/c_text"
+            android:textColorHint="?attr/c_text2"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="5"
+            android:minHeight="44dp" />
+
+        <ImageView
+            android:id="@+id/btnSend"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:elevation="2dp"
+            android:background="@drawable/send_bg"
+            android:src="@drawable/ic_send"
+            android:tint="?attr/c_on_accent" />
+    </LinearLayout>
+</LinearLayout>

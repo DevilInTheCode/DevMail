@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- корпус конверта -->
+    <path
+        android:pathData="M30,40 L78,40 L78,70 L30,70 Z"
+        android:fillColor="#16082E"
+        android:strokeColor="#00FFF0"
+        android:strokeWidth="2.6" />
+    <!-- клапан -->
+    <path
+        android:pathData="M30,40 L54,58 L78,40"
+        android:strokeColor="#FF00E5"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round" />
+    <!-- строка письма -->
+    <path
+        android:pathData="M37,63 L50,63"
+        android:strokeColor="#FF00E5"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,63 L60,63"
+        android:strokeColor="#00FFF0"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round" />
+    <!-- неоновые точки -->
+    <path
+        android:pathData="M27,37 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+        android:fillColor="#00FFF0" />
+    <path
+        android:pathData="M81,37 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+        android:fillColor="#FF00E5" />
+</vector>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DevMail</string>
+    <string name="tab_chats">Чаты</string>
+    <string name="tab_settings">Настройки</string>
+    <string name="empty_title">Пока пусто</string>
+    <string name="empty_chats">Добавьте аккаунт в настройках и обновите.</string>
+    <string name="add_account">+ Добавить аккаунт</string>
+    <string name="hint_message">Сообщение</string>
+    <string name="title_chats">Чаты</string>
+    <string name="title_settings">Настройки</string>
+    <string name="title_account">Аккаунт</string>
+    <string name="title_new">Новое письмо</string>
+    <string name="save">Сохранить</string>
+    <string name="search_hint">Поиск по чатам и письмам</string>
+    <string name="search_chat_hint">Поиск в переписке</string>
+</resources>

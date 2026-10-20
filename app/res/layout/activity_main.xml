@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/c_bg">
+
+    <LinearLayout style="@style/Header">
+
+        <TextView
+            android:id="@+id/btnAccount"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginLeft="2dp"
+            android:gravity="center"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/avatar_bg"
+            android:text="◎" />
+
+        <TextView
+            android:id="@+id/title"
+            style="@style/HeaderTitle"
+            android:text="@string/title_chats" />
+
+        <ImageView
+            android:id="@+id/btnSelRead"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_check"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/btnSelMenu"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_more"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/btnSelDelete"
+            style="@style/IconBtnDanger"
+            android:src="@drawable/ic_trash"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/btnSelCancel"
+            style="@style/IconBtnPlain"
+            android:src="@drawable/ic_close"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/btnSearch"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_search" />
+
+        <ImageView
+            android:id="@+id/btnRefresh"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_refresh" />
+
+        <ImageView
+            android:id="@+id/btnNew"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_plus"
+            android:layout_marginLeft="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/searchBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:paddingRight="12dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/searchInput"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:background="@drawable/field_bg"
+            android:hint="@string/search_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:textColor="?attr/c_text"
+            android:textColorHint="?attr/c_text2"
+            android:textSize="15sp" />
+
+        <ImageView
+            android:id="@+id/btnSearchClear"
+            style="@style/IconBtnPlain"
+            android:layout_marginLeft="6dp"
+            android:src="@drawable/ic_close" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/listChats"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:scrollbars="none"
+            android:clipToPadding="false"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingLeft="32dp"
+            android:paddingRight="32dp">
+
+            <FrameLayout
+                android:layout_width="104dp"
+                android:layout_height="104dp"
+                android:background="@drawable/empty_circle">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="✉"
+                    android:textSize="44sp"
+                    android:textColor="?attr/c_accent" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/emptyTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/empty_title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="?attr/c_text" />
+
+            <TextView
+                android:id="@+id/emptySub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="@string/empty_chats"
+                android:textSize="14sp"
+                android:textColor="?attr/c_text2" />
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/settingsPanel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView style="@style/Section" android:text="ПОЧТА" />
+
+                <TextView
+                    android:id="@+id/btnAccounts"
+                    style="@style/Card"
+                    android:textSize="15sp"
+                    android:textColor="?attr/c_text" />
+
+                <TextView
+                    android:id="@+id/btnAddAccount"
+                    style="@style/Card"
+                    android:gravity="center"
+                    android:text="@string/add_account"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/c_accent" />
+
+                <TextView style="@style/Section" android:text="ПАМЯТЬ" />
+
+                <TextView
+                    android:id="@+id/btnClearCache"
+                    style="@style/Card"
+                    android:textSize="15sp"
+                    android:textColor="?attr/c_text" />
+
+                <TextView style="@style/Section" android:text="ТЕМА" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="11dp"
+                    android:paddingRight="11dp"
+                    android:paddingBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/themeNight"
+                        style="@style/Chip"
+                        android:text="Ночь" />
+
+                    <TextView
+                        android:id="@+id/themeDay"
+                        style="@style/Chip"
+                        android:text="День" />
+
+                    <TextView
+                        android:id="@+id/themeCyber"
+                        style="@style/Chip"
+                        android:text="Киберпанк" />
+                </LinearLayout>
+
+                <TextView style="@style/Section" android:text="ЯЗЫК" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="11dp"
+                    android:paddingRight="11dp"
+                    android:paddingBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/btnLangRu"
+                        style="@style/Chip"
+                        android:text="Русский" />
+
+                    <TextView
+                        android:id="@+id/btnLangEn"
+                        style="@style/Chip"
+                        android:text="English" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnAutoDl"
+                    style="@style/Card"
+                    android:textSize="14sp"
+                    android:textColor="?attr/c_text" />
+
+                <TextView
+                    android:id="@+id/appVersion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:gravity="center"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="18dp"
+                    android:letterSpacing="0.04"
+                    android:textSize="12sp"
+                    android:textColor="?attr/c_text2" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="?attr/c_bar"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:id="@+id/tabChats"
+            style="@style/TabLabel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="@string/tab_chats" />
+
+        <TextView
+            android:id="@+id/tabSettings"
+            style="@style/TabLabel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="@string/tab_settings" />
+    </LinearLayout>
+</LinearLayout>

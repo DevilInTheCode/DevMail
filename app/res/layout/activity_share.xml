@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/c_bg">
+
+    <LinearLayout style="@style/Header">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/IconBtnPlain"
+            android:src="@drawable/ic_close" />
+
+        <TextView
+            style="@style/HeaderTitle"
+            android:text="Поделиться в DevMail" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/c_divider" />
+
+    <TextView
+        android:id="@+id/shareSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="6dp"
+        android:textSize="13sp"
+        android:textColor="?attr/c_text2" />
+
+    <EditText
+        android:id="@+id/shareSearch"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/field_bg"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:hint="Поиск контакта"
+        android:singleLine="true"
+        android:textSize="14sp"
+        android:textColor="?attr/c_text"
+        android:textColorHint="?attr/c_text2"
+        android:inputType="text" />
+
+    <TextView
+        style="@style/Section"
+        android:text="КОМУ ОТПРАВИТЬ" />
+
+    <TextView
+        android:id="@+id/shareNew"
+        style="@style/Card"
+        android:text="Новый адрес…"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="?attr/c_accent" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/shareList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/shareEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingLeft="32dp"
+            android:paddingRight="32dp"
+            android:text="Контактов пока нет — используйте «Новый адрес…»"
+            android:textSize="14sp"
+            android:textColor="?attr/c_text2"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

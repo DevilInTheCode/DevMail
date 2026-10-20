@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/c_bg">
+
+    <LinearLayout style="@style/Header">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            style="@style/IconBtnPlain"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            style="@style/HeaderTitle"
+            android:text="@string/title_account" />
+
+        <ImageView
+            android:id="@+id/btnSave"
+            style="@style/IconBtnAccent"
+            android:src="@drawable/ic_check" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/c_divider" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <TextView style="@style/Section" android:text="ЯЩИК" />
+
+            <EditText
+                android:id="@+id/label"
+                style="@style/Field"
+                android:hint="Название (например, Работа)" />
+
+            <EditText
+                android:id="@+id/email"
+                style="@style/Field"
+                android:hint="Адрес почты"
+                android:inputType="textEmailAddress" />
+
+            <TextView style="@style/Section" android:text="IMAP — ВХОДЯЩИЕ" />
+
+            <EditText
+                android:id="@+id/imapHost"
+                style="@style/Field"
+                android:hint="imap.example.com" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/imapPort"
+                    style="@style/FieldSmall"
+                    android:hint="993" />
+
+                <CheckBox
+                    android:id="@+id/imapSsl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:text="SSL"
+                    android:textColor="?attr/c_text"
+                    android:buttonTint="?attr/c_accent" />
+            </LinearLayout>
+
+            <TextView style="@style/Section" android:text="SMTP — ИСХОДЯЩИЕ" />
+
+            <EditText
+                android:id="@+id/smtpHost"
+                style="@style/Field"
+                android:hint="smtp.example.com" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/smtpPort"
+                    style="@style/FieldSmall"
+                    android:hint="465" />
+
+                <CheckBox
+                    android:id="@+id/smtpSsl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:text="SSL"
+                    android:textColor="?attr/c_text"
+                    android:buttonTint="?attr/c_accent" />
+            </LinearLayout>
+
+            <TextView style="@style/Section" android:text="ВХОД" />
+
+            <EditText
+                android:id="@+id/username"
+                style="@style/Field"
+                android:hint="Логин (обычно адрес)"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/password"
+                style="@style/Field"
+                android:hint="Пароль"
+                android:inputType="textPassword" />
+
+            <TextView style="@style/Section" android:text="ПРОВЕРКА ПОЧТЫ" />
+
+            <EditText
+                android:id="@+id/interval"
+                style="@style/Field"
+                android:hint="Нажмите, чтобы выбрать"
+                android:inputType="none" />
+
+            <TextView
+                style="@style/Hint"
+                android:text="Вручную — только по кнопке, но открытый чат всё равно обновляется сам. Мгновенно — постоянное соединение и тихое уведомление в фоне. Каждые N минут — автопроверка; меньше 15 минут Android разрешает только через постоянное соединение." />
+
+            <TextView style="@style/Section" android:text="СЕРТИФИКАТ СЕРВЕРА" />
+
+            <CheckBox
+                android:id="@+id/trustAll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:buttonTint="?attr/c_accent"
+                android:text="Принимать все сертификаты"
+                android:textColor="?attr/c_text"
+                android:textSize="15sp" />
+
+            <TextView
+                style="@style/Hint"
+                android:text="Включите, если при проверке появляется ошибка вида «Trust anchor for certification path not found», «PKIX path building failed» или «certificate has expired». Соединение при этом остаётся зашифрованным, но приложение не проверяет, кому выдан сертификат." />
+
+            <TextView
+                android:id="@+id/btnTest"
+                style="@style/ActionGhost"
+                android:text="Проверить соединение" />
+
+            <TextView
+                android:id="@+id/btnDelete"
+                style="@style/ActionGhost"
+                android:background="@drawable/btn_danger"
+                android:text="Удалить аккаунт"
+                android:textColor="?attr/c_danger" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

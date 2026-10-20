@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="c_bg" format="color" />
+    <attr name="c_bar" format="color" />
+    <attr name="c_bubble_in" format="color" />
+    <attr name="c_bubble_out" format="color" />
+    <attr name="c_text" format="color" />
+    <attr name="c_text2" format="color" />
+    <attr name="c_accent" format="color" />
+    <attr name="c_accent2" format="color" />
+    <attr name="c_on_accent" format="color" />
+    <attr name="c_badge" format="color" />
+    <attr name="c_divider" format="color" />
+    <attr name="c_field" format="color" />
+    <attr name="c_chip" format="color" />
+    <attr name="c_stroke" format="color" />
+    <attr name="c_ripple" format="color" />
+    <attr name="c_danger" format="color" />
+</resources>
