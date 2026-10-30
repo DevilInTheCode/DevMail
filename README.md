@@ -41,6 +41,21 @@ keytool -genkeypair -keystore debug.keystore -alias androiddebugkey \
   -dname "CN=DevMail Debug,O=DevMail,C=RU"
 ```
 
+## Релизы
+
+APK публикуется в GitHub Releases тем же коммитом, что и код:
+
+```
+PREFIX=/path/to/toolchain ANDROID_JAR=/path/to/android-35/android.jar \
+KEYSTORE=debug.keystore GITHUB_TOKEN=ghp_xxx tools/publish.sh
+```
+
+`tools/publish.sh` собирает APK, коммитит изменения, пушит `main` и создаёт
+релиз `v<versionName>` с файлом `DevMail-<versionName>.apk`. Отдельно опубликовать
+уже собранный APK: `GITHUB_TOKEN=... tools/release.sh build/DevMail.apk`.
+Токен нужен fine-grained с правом **Contents: Read and write** на этот репозиторий;
+его можно положить в `.github_token` (файл в `.gitignore`), чтобы не указывать каждый раз.
+
 ## Структура
 
 ```
