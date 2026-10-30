@@ -116,6 +116,12 @@ if [ -z "$URL" ]; then
 fi
 
 # Публикуем черновик: до этого момента релиза для Obtainium не существует.
-api -X PATCH -d '{"draft": false, "prerelease": false}' \
-  "$API/repos/$REPO/releases/$REL_ID" > /dev/null
-echo "готово: $URL"
+PUB="$(api -X PATCH -d '{"draft": false, "prerelease": false}' \
+  "$API/repos/$REPO/releases/$REL_ID")"
+if ! printf '%s' "$PUB" | python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin).get("draft") is False else 1)'; then
+  echo "Не удалось опубликовать релиз:" >&2
+  printf '%s\n' "$PUB" >&2
+  exit 1
+fi
+# После публикации ссылка ассета меняется с untagged-... на тег.
+echo "готово: https://github.com/$REPO/releases/download/$TAG/$ASSET"
