@@ -4,3 +4,6 @@ build/
 *.keystore
 *.log
 tmp/
+
+# токен GitHub (не коммитить)
+.github_token
