@@ -29,7 +29,7 @@ try: print(json.load(sys.stdin).get("tag_name") or "")
 except Exception: print("")')"
 if [ "$LATEST_TAG" = "$VERSION_NAME" ]; then
   echo "Версия $VERSION_NAME уже опубликована ($LATEST_TAG)." >&2
-  echo "Подними versionName и versionCode в app/AndroidManifest.xml (и VERSION_* в build.sh)." >&2
+  echo "Подними versionName и versionCode в app/AndroidManifest.xml." >&2
   exit 1
 fi
 bash "$ROOT/build.sh"
