@@ -189,7 +189,7 @@ public class MainActivity extends Activity {
         applyThemeChips();
         applyLangChips();
         applyAutoDl();
-        applyMailLog();
+        applyJournal();
         reportMigration();
         setupVersion();
         Schedule.reschedule(this);
@@ -300,6 +300,51 @@ public class MainActivity extends Activity {
         t.setOnClickListener(v -> showAutoDlDialog());
     }
 
+    /** Раздел «Журнал» в настройках виден только когда журнал включён тройным тапом. */
+    private void applyJournal() {
+        boolean on = debugChatVisible();
+        View box = findViewById(R.id.journalBox);
+        if (box != null) box.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (!on) return;
+        TextView open = (TextView) findViewById(R.id.btnOpenJournal);
+        if (open != null) {
+            open.setText(L.t("Открыть журнал отладки"));
+            open.setOnClickListener(v -> openJournal());
+        }
+        TextView clear = (TextView) findViewById(R.id.btnClearJournal);
+        if (clear != null) {
+            clear.setText(L.t("Очистить журнал"));
+            clear.setOnClickListener(v -> confirmClearJournal());
+        }
+        applyMailLog();
+    }
+
+    private void openJournal() {
+        Intent i = new Intent(this, ChatActivity.class);
+        i.putExtra("thread", "debug");
+        i.putExtra("name", L.t("Журнал отладки"));
+        i.putExtra("email", "debug");
+        i.putExtra("account", 0L);
+        startActivity(i);
+    }
+
+    private void confirmClearJournal() {
+        new AlertDialog.Builder(this)
+                .setTitle(L.t("Очистить журнал?"))
+                .setMessage(L.t("Все записи журнала будут удалены. Письма и аккаунты не затрагиваются."))
+                .setNegativeButton(L.t("Отмена"), null)
+                .setPositiveButton(L.t("Очистить"), (d, w) -> {
+                    try {
+                        db.clearDebug();
+                        Toast.makeText(this, L.t("Журнал очищен"), Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this, L.t("Не удалось очистить журнал"), Toast.LENGTH_SHORT).show();
+                    }
+                    reload();
+                })
+                .show();
+    }
+
     /** Строка «Подробный журнал писем»: включает запись заголовков каждого письма. */
     private void applyMailLog() {
         TextView t = (TextView) findViewById(R.id.btnMailLog);
@@ -369,7 +414,9 @@ public class MainActivity extends Activity {
             db.log(L.t("Отладка"), L.t("Журнал отладки включён"));
         } else {
             Notifier.cancelThread(this, "debug");
+            getSharedPreferences("ui", Context.MODE_PRIVATE).edit().remove("mail_log").apply();
         }
+        applyJournal();
         Toast.makeText(this, L.t(on ? "Журнал отладки включён" : "Журнал отладки выключен"), Toast.LENGTH_SHORT).show();
         reload();
     }

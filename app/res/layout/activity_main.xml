@@ -251,11 +251,33 @@
                     android:textSize="14sp"
                     android:textColor="?attr/c_text" />
 
-                <TextView
-                    android:id="@+id/btnMailLog"
-                    style="@style/Card"
-                    android:textSize="14sp"
-                    android:textColor="?attr/c_text" />
+                <LinearLayout
+                    android:id="@+id/journalBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView style="@style/Section" android:text="ЖУРНАЛ" />
+
+                    <TextView
+                        android:id="@+id/btnOpenJournal"
+                        style="@style/Card"
+                        android:textSize="14sp"
+                        android:textColor="?attr/c_text" />
+
+                    <TextView
+                        android:id="@+id/btnMailLog"
+                        style="@style/Card"
+                        android:textSize="14sp"
+                        android:textColor="?attr/c_text" />
+
+                    <TextView
+                        android:id="@+id/btnClearJournal"
+                        style="@style/Card"
+                        android:textSize="14sp"
+                        android:textColor="?attr/c_danger" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/appVersion"

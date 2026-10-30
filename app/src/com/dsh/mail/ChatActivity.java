@@ -68,6 +68,8 @@ public class ChatActivity extends Activity {
     private File cameraFile;
     private boolean debugChat;
     private long newMark;
+    /** С какого id считаются непрочитанные для счётчика внизу. */
+    private long seenMark;
     private TextView avatarView;
     private ImageView avatarImg;
     private AlertDialog contactDialog;
@@ -239,6 +241,7 @@ public class ChatActivity extends Activity {
         if (draft.length() > 0) input.setText(draft);
 
         if (!debugChat) newMark = db.lastSeenId(threadKey);
+        seenMark = newMark;
         load();
         applyChatBg();
     }
@@ -742,10 +745,12 @@ public class ChatActivity extends Activity {
         long ts = adapter.dateAt(firstPos);
         if (ts <= 0) ts = adapter.dateAt(firstPos + 1);
         if (ts > 0) floatDateText.setText(Ui.dayLabel(ts));
-        int after = adapter.messagesAfter(list.getLastVisiblePosition());
-        btnDownCount.setText(after > 99 ? "99+" : String.valueOf(after));
-        btnDownCount.setVisibility(after > 0 ? View.VISIBLE : View.GONE);
-        setDownVisible(after > 0);
+        int last = list.getLastVisiblePosition();
+        if (last >= adapter.getCount() - 1) seenMark = Math.max(seenMark, adapter.maxId());
+        int unread = adapter.unreadAfter(last, seenMark);
+        btnDownCount.setText(unread > 99 ? "99+" : String.valueOf(unread));
+        btnDownCount.setVisibility(unread > 0 ? View.VISIBLE : View.GONE);
+        setDownVisible(adapter.hasMessagesAfter(last));
     }
 
     private void setDownVisible(boolean show) {

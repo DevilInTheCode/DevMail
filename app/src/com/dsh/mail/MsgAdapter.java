@@ -205,12 +205,31 @@ public class MsgAdapter extends BaseAdapter {
     }
 
     /** Сколько писем (не разделителей) находится ниже позиции pos. */
-    public int messagesAfter(int pos) {
+    /** Есть ли строки ниже позиции (для кнопки «вниз»). */
+    public boolean hasMessagesAfter(int pos) {
+        for (int i = Math.max(0, pos) + 1; i < rows.size(); i++) {
+            if (rows.get(i).msg != null) return true;
+        }
+        return false;
+    }
+
+    /** Непрочитанные входящие ниже позиции: всё, что новее отметки просмотра. */
+    public int unreadAfter(int pos, long seenMark) {
         int n = 0;
         for (int i = Math.max(0, pos) + 1; i < rows.size(); i++) {
-            if (rows.get(i).msg != null) n++;
+            MailMessage m = rows.get(i).msg;
+            if (m != null && !m.outgoing && m.id > seenMark) n++;
         }
         return n;
+    }
+
+    /** id последнего письма в списке. */
+    public long maxId() {
+        long id = 0;
+        for (Row r : rows) {
+            if (r.msg != null && r.msg.id > id) id = r.msg.id;
+        }
+        return id;
     }
 
     /** Первая строка, дата которой не раньше midnight; -1 — таких нет. */

@@ -125,6 +125,18 @@ public final class L {
         DICT.put("Журнал писем: подробно", "Mail log: detailed");
         DICT.put("Журнал писем: кратко", "Mail log: brief");
         DICT.put("Обслуживание", "Maintenance");
+        DICT.put("ЖУРНАЛ", "JOURNAL");
+        DICT.put("ПАМЯТЬ", "MEMORY");
+        DICT.put("ТЕМА", "THEME");
+        DICT.put("ЯЗЫК", "LANGUAGE");
+        DICT.put("ПОЧТА", "MAIL");
+        DICT.put("Открыть журнал отладки", "Open debug log");
+        DICT.put("Очистить журнал", "Clear log");
+        DICT.put("Очистить журнал?", "Clear the log?");
+        DICT.put("Все записи журнала будут удалены. Письма и аккаунты не затрагиваются.",
+                "All log entries will be deleted. Messages and accounts are not affected.");
+        DICT.put("Журнал очищен", "Log cleared");
+        DICT.put("Не удалось очистить журнал", "Could not clear the log");
         DICT.put("Писем с нераспознанным адресом: ", "Messages with unrecognized address: ");
         DICT.put(". Они собраны в ветки «Неизвестный отправитель» и «Скрытые получатели». Подробности — в новом журнале писем.",
                 ". They are grouped into “Unknown sender” and “Hidden recipients” threads. See the new mail log for details.");
