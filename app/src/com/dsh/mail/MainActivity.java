@@ -189,6 +189,8 @@ public class MainActivity extends Activity {
         applyThemeChips();
         applyLangChips();
         applyAutoDl();
+        applyMailLog();
+        reportMigration();
         setupVersion();
         Schedule.reschedule(this);
         if (!db.accounts().isEmpty() && b == null) syncNow();
@@ -296,6 +298,32 @@ public class MainActivity extends Activity {
         t.setText(L.t("Автозагрузка сообщений") + ": "
                 + AttachStore.labels()[AttachStore.level(this)]);
         t.setOnClickListener(v -> showAutoDlDialog());
+    }
+
+    /** Строка «Подробный журнал писем»: включает запись заголовков каждого письма. */
+    private void applyMailLog() {
+        TextView t = (TextView) findViewById(R.id.btnMailLog);
+        if (t == null) return;
+        boolean on = getSharedPreferences(L.PREF, MODE_PRIVATE).getBoolean("mail_log", false);
+        t.setText(L.t("Подробный журнал писем") + ": " + L.t(on ? "вкл" : "выкл"));
+        t.setOnClickListener(v -> {
+            boolean now = !getSharedPreferences(L.PREF, MODE_PRIVATE).getBoolean("mail_log", false);
+            getSharedPreferences(L.PREF, MODE_PRIVATE).edit().putBoolean("mail_log", now).apply();
+            applyMailLog();
+            Toast.makeText(this, L.t(now ? "Журнал писем: подробно" : "Журнал писем: кратко"),
+                    Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    /** Отчёт миграции: сколько старых писем потеряли адрес и куда они переехали. */
+    private void reportMigration() {
+        android.content.SharedPreferences sp = getSharedPreferences(L.PREF, MODE_PRIVATE);
+        int n = sp.getInt("bad_peers", 0);
+        if (n <= 0) return;
+        sp.edit().remove("bad_peers").apply();
+        db.log(L.t("Обслуживание"), L.t("Писем с нераспознанным адресом: ") + n
+                + L.t(". Они собраны в ветки «Неизвестный отправитель» и «Скрытые получатели»."
+                + " Подробности — в новом журнале писем."));
     }
 
     private void showAutoDlDialog() {

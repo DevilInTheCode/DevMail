@@ -119,6 +119,15 @@ public final class L {
         DICT.put("Загрузка вложения…", "Downloading attachment…");
         DICT.put("Загрузить", "Download");
         DICT.put("Автозагрузка сообщений", "Auto-download messages");
+        DICT.put("Подробный журнал писем", "Detailed mail log");
+        DICT.put("вкл", "on");
+        DICT.put("выкл", "off");
+        DICT.put("Журнал писем: подробно", "Mail log: detailed");
+        DICT.put("Журнал писем: кратко", "Mail log: brief");
+        DICT.put("Обслуживание", "Maintenance");
+        DICT.put("Писем с нераспознанным адресом: ", "Messages with unrecognized address: ");
+        DICT.put(". Они собраны в ветки «Неизвестный отправитель» и «Скрытые получатели». Подробности — в новом журнале писем.",
+                ". They are grouped into “Unknown sender” and “Hidden recipients” threads. See the new mail log for details.");
         DICT.put("Все", "All");
         DICT.put("Все аккаунты", "All accounts");
         DICT.put("Аккаунт", "Account");

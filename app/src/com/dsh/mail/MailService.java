@@ -466,7 +466,9 @@ public final class MailService {
             log(db, quiet, L.t("Отправитель не распознан"), folder + " #" + uid
                     + "  From: " + hdr(src, "From") + "  To: " + hdr(src, "To"));
         }
-        if (!quiet) {
+        boolean verbose = !quiet && ctx.getSharedPreferences(L.PREF, Context.MODE_PRIVATE)
+                .getBoolean("mail_log", false);
+        if (verbose) {
             StringBuilder attList = new StringBuilder();
             for (AttachmentInfo ai : atts) {
                 if (attList.length() > 0) attList.append(", ");

@@ -17,8 +17,11 @@ public class Db extends SQLiteOpenHelper {
     private static final String NAME = "mail.db";
     private static final int VERSION = 10;
 
+    private final Context appCtx;
+
     public Db(Context c) {
         super(c, NAME, null, VERSION);
+        appCtx = c.getApplicationContext();
     }
 
     @Override
@@ -50,11 +53,40 @@ public class Db extends SQLiteOpenHelper {
             // Групповые адреса вроде "hidden-recipients": ; попадали в peer_email
             // и превращались в отдельный чат с пустым именем. Такие письма
             // собираем в общую ветку «без собеседника».
+            int bad = 0;
+            try {
+                Cursor c = d.rawQuery("SELECT COUNT(*) FROM messages WHERE thread_key<>'debug'"
+                        + " AND (peer_email IS NULL OR peer_email NOT LIKE '%@%')", null);
+                if (c.moveToFirst()) bad = c.getInt(0);
+                c.close();
+            } catch (Exception ignored) {
+            }
             try {
                 d.execSQL("UPDATE messages SET peer_email='', peer_name='',"
                         + " thread_key = account_id || (CASE WHEN outgoing=1 THEN '|?out' ELSE '|?in' END)"
                         + " WHERE thread_key<>'debug' AND (peer_email IS NULL OR peer_email NOT LIKE '%@%')");
             } catch (Exception ignored) {
+            }
+            try {
+                // Письма, где текст был пуст, а вложение есть, показываем именем файла.
+                d.execSQL("UPDATE messages SET"
+                        + " body = COALESCE((SELECT '📄 ' || a.name FROM attachments a"
+                        + "   WHERE a.message_id=messages.id AND a.name IS NOT NULL AND a.name<>''"
+                        + "   ORDER BY a.id LIMIT 1), body),"
+                        + " snippet = COALESCE((SELECT '📄 ' || a.name FROM attachments a"
+                        + "   WHERE a.message_id=messages.id AND a.name IS NOT NULL AND a.name<>''"
+                        + "   ORDER BY a.id LIMIT 1), snippet)"
+                        + " WHERE has_attach=1 AND (body IS NULL OR body=''"
+                        + "   OR body LIKE '%пустое сообщение%'"
+                        + "   OR body LIKE '%(empty message)%')");
+            } catch (Exception ignored) {
+            }
+            if (bad > 0) {
+                try {
+                    appCtx.getSharedPreferences(L.PREF, Context.MODE_PRIVATE)
+                            .edit().putInt("bad_peers", bad).apply();
+                } catch (Exception ignored) {
+                }
             }
         }
         if (oldV < 6) {
