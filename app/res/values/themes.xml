@@ -11,6 +11,7 @@
         <item name="c_bg">#0B141A</item>
         <item name="c_bar">#1F2C34</item>
         <item name="c_bubble_in">#EB202C33</item>
+        <item name="c_bubble_unread">#EB1A4748</item>
         <item name="c_bubble_out">#EB005C4B</item>
         <item name="c_text">#E9EDEF</item>
         <item name="c_text2">#8696A0</item>
@@ -36,6 +37,7 @@
         <item name="c_bg">#EFEAE2</item>
         <item name="c_bar">#FFFFFF</item>
         <item name="c_bubble_in">#F2FFFFFF</item>
+        <item name="c_bubble_unread">#F2E2F7EC</item>
         <item name="c_bubble_out">#EBD9FDD3</item>
         <item name="c_text">#111B21</item>
         <item name="c_text2">#667781</item>
@@ -61,6 +63,7 @@
         <item name="c_bg">#05010B</item>
         <item name="c_bar">#12002B</item>
         <item name="c_bubble_in">#EB16082E</item>
+        <item name="c_bubble_unread">#EB3F084F</item>
         <item name="c_bubble_out">#EB2B0A48</item>
         <item name="c_text">#E6FBFF</item>
         <item name="c_text2">#A98BFF</item>

@@ -4,6 +4,7 @@
     <attr name="c_bar" format="color" />
     <attr name="c_bubble_in" format="color" />
     <attr name="c_bubble_out" format="color" />
+    <attr name="c_bubble_unread" format="color" />
     <attr name="c_text" format="color" />
     <attr name="c_text2" format="color" />
     <attr name="c_accent" format="color" />

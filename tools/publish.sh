@@ -27,7 +27,7 @@ LATEST_TAG="$(curl -sS -H "Authorization: Bearer $TOKEN" \
   "$API/repos/$REPO/releases/latest" | python3 -c 'import sys,json
 try: print(json.load(sys.stdin).get("tag_name") or "")
 except Exception: print("")')"
-if [ "$LATEST_TAG" = "v$VERSION_NAME" ]; then
+if [ "$LATEST_TAG" = "$VERSION_NAME" ]; then
   echo "Версия $VERSION_NAME уже опубликована ($LATEST_TAG)." >&2
   echo "Подними versionName и versionCode в app/AndroidManifest.xml (и VERSION_* в build.sh)." >&2
   exit 1

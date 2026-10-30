@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Публикует собранный APK как GitHub Release (тег v<versionName>).
+# Публикует собранный APK как GitHub Release (тег = versionName, файл DevMail.apk).
 # Токен: $GITHUB_TOKEN, либо файл .github_token в корне репозитория.
 # Использование: tools/release.sh [путь-к-apk]
 #
 # Правила, без которых Obtainium не увидит обновление:
-#   * тег ровно "v<versionName>" (v3.3), versionName — обычные числа (3.3, 3.4, 3.10);
-#   * в релизе ровно один APK, имя заканчивается на .apk (DevMail-3.3.apk);
+#   * тег ровно номер версии (3.5), без букв и префиксов; versionName — 3.5, 3.6, 3.10;
+#   * в релизе ровно один APK с постоянным именем DevMail.apk;
 #   * релиз опубликован (не draft, не prerelease), иначе Obtainium его пропустит;
 #   * versionCode и versionName всегда растут — повторно тот же тег не публикуем.
 # Релиз создаётся черновиком, APK заливается, и только потом черновик публикуется,
@@ -33,8 +33,8 @@ fi
 
 VERSION_NAME="$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' "$MANIFEST" | head -1)"
 VERSION_CODE="$(sed -n 's/.*android:versionCode="\([^"]*\)".*/\1/p' "$MANIFEST" | head -1)"
-TAG="v$VERSION_NAME"
-ASSET="DevMail-$VERSION_NAME.apk"
+TAG="$VERSION_NAME"
+ASSET="DevMail.apk"
 SHA="$(sha256sum "$APK" | cut -d' ' -f1)"
 
 echo "== release $TAG (versionCode $VERSION_CODE) =="
@@ -74,7 +74,7 @@ if [ -n "$REL_ID" ]; then
   echo "релиз уже есть, id=$REL_ID — перезаливаю ассет (FORCE=1)"
 else
   PAYLOAD="$(python3 -c 'import json,sys
-print(json.dumps({"tag_name": sys.argv[1], "name": "DevMail " + sys.argv[2],
+print(json.dumps({"tag_name": sys.argv[1], "name": sys.argv[2],
                   "body": open(sys.argv[3], encoding="utf-8").read(),
                   "draft": True, "prerelease": False}))' "$TAG" "$VERSION_NAME" "$BODY_FILE")"
   RESP="$(api -X POST -d "$PAYLOAD" "$API/repos/$REPO/releases")"

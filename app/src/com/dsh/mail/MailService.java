@@ -1,6 +1,7 @@
 package com.dsh.mail;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -45,6 +46,8 @@ public final class MailService {
 
     private static final String TAG = "Mail";
     private static final int MAX_FETCH = 25;
+    /** Префы синхронизации: с какого момента аккаунт «живёт» (как в Delta Chat). */
+    private static final String SYNC_PREFS = "sync";
 
     private MailService() {
     }
@@ -159,6 +162,7 @@ public final class MailService {
         public int inboxTotal;
         public int failed;
         public int repaired;
+        public int oldSkipped;
         public String sent = "";
         public String error;
         public String sampleError = "";
@@ -178,6 +182,7 @@ public final class MailService {
             r.folders = found.describe();
             r.inbox = found.inbox;
 
+            long since = syncSince(ctx, db, a);
             log(db, quiet, L.t("Старт"), a.email + " → " + found.inbox + L.t(", папок: ") + found.all.size());
             Folder opened = openAny(store, found.inboxCandidates());
             if (opened == null) {
@@ -186,7 +191,7 @@ public final class MailService {
             } else {
                 r.inbox = opened.getFullName();
                 try {
-                    syncFolder(ctx, db, a, opened, r, quiet);
+                    syncFolder(ctx, db, a, opened, r, quiet, since);
                 } catch (Exception e) {
                     r.error = L.t("входящие (") + r.inbox + "): " + describe(e);
                 } finally {
@@ -196,6 +201,7 @@ public final class MailService {
 
             log(db, quiet, L.t("Итог"), r.inbox + L.t(": писем ") + r.inboxTotal + L.t(", новых ") + r.added
                     + (r.repaired > 0 ? L.t(", исправлено ") + r.repaired : "")
+                    + (r.oldSkipped > 0 ? L.t(", старых пропущено ") + r.oldSkipped : "")
                     + L.t(", ошибок ") + r.failed + (r.sampleError.length() > 0 ? " (" + r.sampleError + ")" : ""));
             if (r.error != null) log(db, quiet, L.t("Ошибка"), r.error);
 
@@ -204,7 +210,7 @@ public final class MailService {
                 if (sf != null) {
                     r.sent = sf.getFullName();
                     try {
-                        if (!sf.getFullName().equalsIgnoreCase(r.inbox)) syncFolder(ctx, db, a, sf, r, quiet);
+                        if (!sf.getFullName().equalsIgnoreCase(r.inbox)) syncFolder(ctx, db, a, sf, r, quiet, since);
                     } catch (Exception e) {
                         Log.w(TAG, "sent folder: " + e);
                     } finally {
@@ -220,6 +226,7 @@ public final class MailService {
         }
         if (a.lastSync == 0) db.baselineUnseen();
         db.touchSync(a.id, System.currentTimeMillis());
+        db.trimDebug(400);
         return r;
     }
 
@@ -249,7 +256,31 @@ public final class MailService {
         return null;
     }
 
-    private static void syncFolder(Context ctx, Db db, Account a, Folder f, SyncResult r, boolean quiet) throws Exception {
+    /**
+     * Момент, раньше которого письма не загружаем. Запоминается при первом запуске
+     * аккаунта — история до установки не скачивается (поведение Delta Chat).
+     * Если письма уже есть (обновление приложения), обрезания нет.
+     */
+    private static long syncSince(Context ctx, Db db, Account a) {
+        SharedPreferences p = ctx.getSharedPreferences(SYNC_PREFS, 0);
+        String key = "since_" + a.id;
+        long v = p.getLong(key, -1);
+        if (v >= 0) return v;
+        v = db.messageCount(a.id) > 0 ? 0 : System.currentTimeMillis();
+        p.edit().putLong(key, v).apply();
+        return v;
+    }
+
+    private static boolean olderThan(Message m, long since) {
+        try {
+            Date d = m.getSentDate();
+            return d != null && d.getTime() < since;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static void syncFolder(Context ctx, Db db, Account a, Folder f, SyncResult r, boolean quiet, long since) throws Exception {
         String folderName = f.getFullName();
         int total = f.getMessageCount();
         if (folderName.equalsIgnoreCase(r.inbox)) r.inboxTotal = total;
@@ -273,6 +304,11 @@ public final class MailService {
             if (uid <= 0) continue;
             long knownId = db.messageId(a.id, folderName, uid);
             if (knownId > 0 && !db.needsPeerRepair(knownId)) continue;
+            // Старые письма (до первого запуска) не качаем; уже сохранённые чиним как обычно.
+            if (knownId == 0 && since > 0 && olderThan(m, since)) {
+                r.oldSkipped++;
+                continue;
+            }
             boolean repair = knownId > 0;
             try {
                 if (storeMessage(ctx, db, a, m, folderName, uid, quiet, knownId)) {

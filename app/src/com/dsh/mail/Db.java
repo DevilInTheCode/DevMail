@@ -477,6 +477,29 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().delete("messages", "thread_key=?", new String[]{DEBUG_THREAD});
     }
 
+    /** Сколько писем аккаунта уже сохранено (нужно, чтобы понять «первый запуск»). */
+    public int messageCount(long accountId) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT COUNT(*) FROM messages WHERE account_id=? AND thread_key<>?",
+                new String[]{String.valueOf(accountId), DEBUG_THREAD});
+        try {
+            return c.moveToFirst() ? c.getInt(0) : 0;
+        } finally {
+            c.close();
+        }
+    }
+
+    /** Журнал отладки не должен расти бесконечно: держим только последние keep строк. */
+    public void trimDebug(int keep) {
+        try {
+            getWritableDatabase().execSQL(
+                    "DELETE FROM messages WHERE thread_key=? AND id NOT IN"
+                            + " (SELECT id FROM messages WHERE thread_key=? ORDER BY id DESC LIMIT ?)",
+                    new Object[]{DEBUG_THREAD, DEBUG_THREAD, keep});
+        } catch (Exception ignored) {
+        }
+    }
+
     private static final String CHAT_SELECT = "SELECT m.thread_key, m.peer_name, m.peer_email,"
             + " m.snippet, m.date, m.account_id, m.outgoing,"
             + " (SELECT COUNT(*) FROM messages x WHERE x.thread_key=m.thread_key AND x.outgoing=0"

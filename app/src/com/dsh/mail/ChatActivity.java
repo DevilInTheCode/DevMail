@@ -68,8 +68,8 @@ public class ChatActivity extends Activity {
     private File cameraFile;
     private boolean debugChat;
     private long newMark;
-    /** С какого id считаются непрочитанные для счётчика внизу. */
-    private long seenMark;
+    /** С какого id считаются непрочитанные: счётчик внизу и подсветка входящих. */
+    private long readMark;
     private TextView avatarView;
     private ImageView avatarImg;
     private AlertDialog contactDialog;
@@ -241,7 +241,7 @@ public class ChatActivity extends Activity {
         if (draft.length() > 0) input.setText(draft);
 
         if (!debugChat) newMark = db.lastSeenId(threadKey);
-        seenMark = newMark;
+        readMark = newMark;
         load();
         applyChatBg();
     }
@@ -684,6 +684,7 @@ public class ChatActivity extends Activity {
         final boolean atBottom = isAtBottom();
         final boolean first = !initialScrollDone;
         adapter.setHighlight(0);
+        adapter.setReadMark(readMark);
         adapter.setMessages(msgs, map, newMark);
         list.post(new Runnable() {
             @Override
@@ -715,8 +716,6 @@ public class ChatActivity extends Activity {
                 updateScrollUi();
             }
         });
-        db.markThreadSeen(threadKey);
-        Notifier.cancelThread(this, threadKey);
     }
 
     /** Прыжок к строке списка; если позиционирование не сработало — хотя бы выделяем её. */
@@ -746,11 +745,31 @@ public class ChatActivity extends Activity {
         if (ts <= 0) ts = adapter.dateAt(firstPos + 1);
         if (ts > 0) floatDateText.setText(Ui.dayLabel(ts));
         int last = list.getLastVisiblePosition();
-        if (last >= adapter.getCount() - 1) seenMark = Math.max(seenMark, adapter.maxId());
-        int unread = adapter.unreadAfter(last, seenMark);
+        if (last >= adapter.getCount() - 1) markSeenAtBottom();
+        int unread = adapter.unreadAfter(last, readMark);
         btnDownCount.setText(unread > 99 ? "99+" : String.valueOf(unread));
         btnDownCount.setVisibility(unread > 0 ? View.VISIBLE : View.GONE);
         setDownVisible(adapter.hasMessagesAfter(last));
+    }
+
+    /**
+     * Пользователь дошёл до последнего письма: только теперь чат считается прочитанным.
+     * Раньше отметка ставилась сразу при открытии, из-за этого счётчик непрочитанных
+     * внизу всегда показывал 0.
+     */
+    private void markSeenAtBottom() {
+        if (adapter == null || adapter.getCount() == 0) return;
+        if (list.getLastVisiblePosition() < adapter.getCount() - 1) return;
+        long max = adapter.maxId();
+        if (max <= 0) return;
+        Notifier.cancelThread(this, threadKey);
+        if (readMark >= max) return;
+        readMark = max;
+        newMark = max;
+        adapter.setReadMark(readMark);
+        adapter.clearNewDivider();
+        db.markThreadSeen(threadKey);
+        adapter.notifyDataSetChanged();
     }
 
     private void setDownVisible(boolean show) {

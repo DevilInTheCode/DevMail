@@ -42,6 +42,8 @@ public class MsgAdapter extends BaseAdapter {
     private OnAttach onAttach;
     private Map<Long, List<AttachmentInfo>> atts = new HashMap<Long, List<AttachmentInfo>>();
     private long highlightId;
+    /** id, до которого всё прочитано: более новые входящие подсвечиваются. */
+    private long readMark;
 
     public MsgAdapter(Context c) {
         ctx = c;
@@ -111,6 +113,17 @@ public class MsgAdapter extends BaseAdapter {
     public void setHighlight(long messageId) {
         highlightId = messageId;
         notifyDataSetChanged();
+    }
+
+    public void setReadMark(long id) {
+        readMark = id;
+    }
+
+    /** Убирает разделитель «Новые сообщения»: пользователь дочитал до конца. */
+    public void clearNewDivider() {
+        for (int i = rows.size() - 1; i >= 0; i--) {
+            if (rows.get(i).type == T_NEW) rows.remove(i);
+        }
     }
 
     public void setMessages(List<MailMessage> list, Map<Long, List<AttachmentInfo>> attachments) {
@@ -299,6 +312,11 @@ public class MsgAdapter extends BaseAdapter {
         }
         final MailMessage m = r.msg;
         v.setTranslationX(0);
+        if (!out) {
+            boolean unread = readMark > 0 && m.id > readMark;
+            v.findViewById(R.id.bubble).setBackgroundResource(
+                    unread ? R.drawable.bubble_in_unread : R.drawable.bubble_in);
+        }
         View quoteBox = v.findViewById(R.id.quoteBox);
         if (m.quoteText != null && m.quoteText.trim().length() > 0) {
             quoteBox.setVisibility(View.VISIBLE);
