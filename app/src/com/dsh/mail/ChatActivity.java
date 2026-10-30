@@ -106,7 +106,9 @@ public class ChatActivity extends Activity {
         peerEmail = getIntent().getStringExtra("email");
         accountId = getIntent().getLongExtra("account", 0);
         if (peerEmail == null) peerEmail = "";
+        if (peerEmail.indexOf('@') <= 0) peerEmail = "";
         if (peerName == null || peerName.trim().isEmpty()) peerName = peerEmail;
+        if (peerName == null || peerName.trim().isEmpty()) peerName = Db.fallbackName(threadKey);
 
         originalName = peerName;
         String alias = db.chatName(threadKey);
@@ -509,6 +511,14 @@ public class ChatActivity extends Activity {
     /** Карточка собеседника: фото, имя, адрес и быстрые действия. */
     private void showContactCard() {
         if (debugChat) return;
+        if (peerEmail.length() == 0) {
+            new AlertDialog.Builder(this)
+                    .setTitle(peerName)
+                    .setMessage(L.t("У этого письма нет адреса отправителя — ответить нельзя. Подробности в журнале отладки."))
+                    .setPositiveButton(L.t("Закрыть"), null)
+                    .show();
+            return;
+        }
         final LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         int pad = Ui.dp(this, 22);
@@ -1270,6 +1280,10 @@ public class ChatActivity extends Activity {
 
     private void send() {
         if (debugChat) return;
+        if (peerEmail.length() == 0) {
+            Toast.makeText(this, L.t("Нет адреса получателя"), Toast.LENGTH_SHORT).show();
+            return;
+        }
         final String text = input.getText().toString().trim();
         if (text.isEmpty() && pendingAttach == null) return;
         Account acc = db.account(accountId);

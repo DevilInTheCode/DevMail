@@ -15,7 +15,7 @@ import java.util.Map;
 public class Db extends SQLiteOpenHelper {
 
     private static final String NAME = "mail.db";
-    private static final int VERSION = 9;
+    private static final int VERSION = 10;
 
     public Db(Context c) {
         super(c, NAME, null, VERSION);
@@ -46,6 +46,17 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase d, int oldV, int newV) {
+        if (oldV < 10) {
+            // Групповые адреса вроде "hidden-recipients": ; попадали в peer_email
+            // и превращались в отдельный чат с пустым именем. Такие письма
+            // собираем в общую ветку «без собеседника».
+            try {
+                d.execSQL("UPDATE messages SET peer_email='', peer_name='',"
+                        + " thread_key = account_id || (CASE WHEN outgoing=1 THEN '|?out' ELSE '|?in' END)"
+                        + " WHERE thread_key<>'debug' AND (peer_email IS NULL OR peer_email NOT LIKE '%@%')");
+            } catch (Exception ignored) {
+            }
+        }
         if (oldV < 6) {
             try {
                 d.execSQL("CREATE TABLE IF NOT EXISTS chat_names (thread_key TEXT PRIMARY KEY, name TEXT, bg TEXT)");
@@ -383,8 +394,19 @@ public class Db extends SQLiteOpenHelper {
                 it.pinned = f[0] == 1;
                 it.muted = f[1] == 1;
             }
+            if (it.name == null || it.name.trim().length() == 0) {
+                it.name = fallbackName(it.threadKey);
+            }
         }
         return out;
+    }
+
+    /** Имя ветки, у которой не осталось ни адреса, ни имени собеседника. */
+    public static String fallbackName(String threadKey) {
+        if (threadKey == null) return L.t("Без имени");
+        if (threadKey.endsWith("|?in")) return L.t("Неизвестный отправитель");
+        if (threadKey.endsWith("|?out")) return L.t("Скрытые получатели");
+        return L.t("Без имени");
     }
 
     /** Поиск по имени, адресу, теме, сниппету и тексту письма (без учёта регистра). */

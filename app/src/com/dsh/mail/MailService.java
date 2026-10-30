@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
 import com.sun.mail.imap.IMAPSSLStore;
@@ -270,7 +271,7 @@ public final class MailService {
             if (uid <= 0) continue;
             if (db.hasMessage(a.id, folderName, uid)) continue;
             try {
-                if (storeMessage(ctx, db, a, m, folderName, uid)) r.added++;
+                if (storeMessage(ctx, db, a, m, folderName, uid, quiet)) r.added++;
             } catch (Exception e) {
                 r.failed++;
                 if (r.sampleError.length() == 0) {
@@ -317,7 +318,8 @@ public final class MailService {
         }
     }
 
-    private static boolean storeMessage(Context ctx, Db db, Account a, Message m, String folder, long uid) throws Exception {
+    private static boolean storeMessage(Context ctx, Db db, Account a, Message m, String folder, long uid,
+                                       boolean quiet) throws Exception {
         String msgid = null;
         try {
             String[] h = m.getHeader("Message-ID");
@@ -375,33 +377,53 @@ public final class MailService {
         } catch (Exception ignored) {
         }
 
-        String peerName = "";
-        String peerEmail = "";
-        Address[] from = null;
+        Address[] fromArr = null;
         try {
-            from = src.getFrom();
+            fromArr = src.getFrom();
         } catch (Exception ignored) {
         }
-        if (from != null && from.length > 0) {
-            InternetAddress ia = toAddress(from[0]);
-            peerEmail = ia.getAddress() == null ? "" : ia.getAddress();
-            peerName = ia.getPersonal() == null ? "" : ia.getPersonal();
-        }
+        InternetAddress fromIA = pickAddress(fromArr, null);
+        if (fromIA == null) fromIA = headerAddress(src, "Sender");
+        if (fromIA == null) fromIA = headerAddress(src, "Reply-To");
+        if (fromIA == null) fromIA = headerAddress(src, "Return-Path");
 
-        boolean outgoing = peerEmail.equalsIgnoreCase(a.email);
+        String peerName = fromIA == null || fromIA.getPersonal() == null ? "" : fromIA.getPersonal();
+        String peerEmail = fromIA == null || fromIA.getAddress() == null ? "" : fromIA.getAddress().trim();
+
+        boolean outgoing = peerEmail.equalsIgnoreCase(a.email) || mentions(fromArr, a.email);
         if (outgoing) {
-            Address[] to = null;
+            InternetAddress peer = null;
             try {
-                to = src.getRecipients(Message.RecipientType.TO);
+                peer = pickAddress(src.getRecipients(Message.RecipientType.TO), a.email);
             } catch (Exception ignored) {
             }
-            if (to != null && to.length > 0) {
-                InternetAddress ia = toAddress(to[0]);
-                peerEmail = ia.getAddress() == null ? peerEmail : ia.getAddress();
-                peerName = ia.getPersonal() == null ? "" : ia.getPersonal();
+            if (peer == null) {
+                try {
+                    peer = pickAddress(src.getRecipients(Message.RecipientType.CC), a.email);
+                } catch (Exception ignored) {
+                }
+            }
+            if (peer == null) {
+                try {
+                    peer = pickAddress(src.getRecipients(Message.RecipientType.BCC), a.email);
+                } catch (Exception ignored) {
+                }
+            }
+            if (peer != null) {
+                String e = peer.getAddress() == null ? "" : peer.getAddress().trim();
+                if (e.length() > 0) {
+                    peerEmail = e;
+                    peerName = peer.getPersonal() == null ? "" : peer.getPersonal();
+                }
             }
         }
-        if (peerEmail == null) peerEmail = "";
+        // Групповые адреса вида "hidden-recipients": ; — не адрес. Без реального
+        // собеседника письмо уходит в общую ветку, а не в чат со странным именем.
+        boolean knownPeer = peerEmail.indexOf('@') > 0;
+        if (!knownPeer) {
+            peerEmail = "";
+            peerName = "";
+        }
 
         StringBuilder plain = new StringBuilder();
         StringBuilder html = new StringBuilder();
@@ -414,7 +436,14 @@ public final class MailService {
 
         String body = plain.toString().trim();
         if (body.length() == 0) body = htmlToText(html.toString());
-        if (body.length() == 0) body = L.t("(пустое сообщение)");
+        if (body.length() == 0) {
+            if (!atts.isEmpty()) {
+                body = "\uD83D\uDCE4 " + atts.get(0).name;
+                if (atts.size() > 1) body += " +" + (atts.size() - 1);
+            } else {
+                body = L.t("(пустое сообщение)");
+            }
+        }
 
         String snippet = body.replace('\n', ' ').replace('\r', ' ').replaceAll("\\s+", " ");
         if (snippet.length() > 120) snippet = snippet.substring(0, 120) + "…";
@@ -433,12 +462,38 @@ public final class MailService {
         } catch (Exception ignored) {
         }
 
+        if (!knownPeer) {
+            log(db, quiet, L.t("Отправитель не распознан"), folder + " #" + uid
+                    + "  From: " + hdr(src, "From") + "  To: " + hdr(src, "To"));
+        }
+        if (!quiet) {
+            StringBuilder attList = new StringBuilder();
+            for (AttachmentInfo ai : atts) {
+                if (attList.length() > 0) attList.append(", ");
+                attList.append(ai.name).append(" (").append(ai.size).append(" b)");
+            }
+            log(db, quiet, L.t("Письмо"), folder + " #" + uid
+                    + "\n  From: " + hdr(src, "From")
+                    + "\n  To: " + hdr(src, "To")
+                    + "\n  Cc: " + hdr(src, "Cc") + "   Bcc: " + hdr(src, "Bcc")
+                    + "\n  Subject: " + subject
+                    + "\n  Date: " + fmt(date)
+                    + "\n  Peer: " + (knownPeer ? peerEmail : "(не распознан)")
+                    + "\n  Thread: " + (knownPeer ? a.id + "|" + peerEmail.toLowerCase(Locale.ROOT)
+                    : a.id + (outgoing ? "|?out" : "|?in"))
+                    + "\n  Msg-ID: " + (msgid == null ? "" : msgid)
+                    + "\n  Вложения: " + (atts.isEmpty() ? "-" : atts.size() + " [" + attList + "]")
+                    + "\n  Текст: " + body.length() + " симв."
+                    + (rawPath == null ? "" : "\n  raw: " + rawPath));
+        }
+
         MailMessage mm = new MailMessage();
         mm.accountId = a.id;
         mm.folder = folder;
         mm.uid = uid;
         mm.msgid = msgid == null ? "" : msgid;
-        mm.threadKey = a.id + "|" + peerEmail.toLowerCase();
+        mm.threadKey = knownPeer ? a.id + "|" + peerEmail.toLowerCase(Locale.ROOT)
+                : a.id + (outgoing ? "|?out" : "|?in");
         mm.peerName = peerName;
         mm.peerEmail = peerEmail;
         mm.subject = subject;
@@ -473,6 +528,81 @@ public final class MailService {
     }
 
     // ---------------- разбор MIME ----------------
+
+    /** Первый настоящий адрес: группы раскрываются, пустые и групповые строки пропускаются. */
+    private static InternetAddress pickAddress(Address[] arr, String skip) {
+        if (arr == null) return null;
+        for (Address a : arr) {
+            if (a == null) continue;
+            InternetAddress ia = toAddress(a);
+            if (ia == null) continue;
+            if (ia.isGroup()) {
+                InternetAddress[] members = null;
+                try {
+                    members = ia.getGroup(false);
+                } catch (Exception ignored) {
+                }
+                if (members != null) {
+                    InternetAddress m = pickAddress(members, skip);
+                    if (m != null) return m;
+                }
+                continue;
+            }
+            String addr = ia.getAddress();
+            if (addr == null) continue;
+            addr = addr.trim();
+            if (addr.indexOf('@') <= 0) continue;
+            if (skip != null && addr.equalsIgnoreCase(skip)) continue;
+            return ia;
+        }
+        return null;
+    }
+
+    private static InternetAddress headerAddress(Message m, String name) {
+        try {
+            String[] v = m.getHeader(name);
+            if (v == null || v.length == 0) return null;
+            StringBuilder sb = new StringBuilder();
+            for (String s : v) {
+                if (s == null) continue;
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(s);
+            }
+            if (sb.length() == 0) return null;
+            return pickAddress(InternetAddress.parse(sb.toString(), false), null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static boolean mentions(Address[] arr, String email) {
+        if (arr == null || email == null || email.length() == 0) return false;
+        String e = email.toLowerCase(Locale.ROOT);
+        for (Address a : arr) {
+            if (a != null && a.toString().toLowerCase(Locale.ROOT).contains(e)) return true;
+        }
+        return false;
+    }
+
+    private static String hdr(Message m, String name) {
+        try {
+            String[] v = m.getHeader(name);
+            if (v == null) return "";
+            StringBuilder sb = new StringBuilder();
+            for (String s : v) {
+                if (s == null) continue;
+                if (sb.length() > 0) sb.append(" | ");
+                sb.append(s);
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String fmt(long t) {
+        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.US).format(new Date(t));
+    }
 
     private static InternetAddress toAddress(Address a) {
         try {

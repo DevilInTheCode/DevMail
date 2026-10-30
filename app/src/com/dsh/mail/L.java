@@ -132,6 +132,15 @@ public final class L {
         DICT.put("Нечего отправить", "Nothing to send");
         DICT.put("Файл: ", "File: ");
         DICT.put("Файлов: ", "Files: ");
+        DICT.put("Неизвестный отправитель", "Unknown sender");
+        DICT.put("Скрытые получатели", "Hidden recipients");
+        DICT.put("Без имени", "No name");
+        DICT.put("Отправитель не распознан", "Sender not recognized");
+        DICT.put("Письмо", "Message");
+        DICT.put("Нет адреса получателя", "No recipient address");
+        DICT.put("Вложение: ", "Attachment: ");
+        DICT.put("У этого письма нет адреса отправителя — ответить нельзя. Подробности в журнале отладки.",
+                "This message has no sender address — you can't reply. See the debug log for details.");
         DICT.put("Готовим файл…", "Preparing file…");
         DICT.put("Аккаунтов пока нет.\nДобавьте ящик, чтобы получать почту.",
                 "No accounts yet.\nAdd a mailbox to receive mail.");

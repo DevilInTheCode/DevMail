@@ -65,7 +65,7 @@ public class App extends Application {
     }
 
     public static String version() {
-        return "30/3.0";
+        return "31/3.1";
     }
 
     /** Отчёт о прошлом падении, если он ещё не показан. */
