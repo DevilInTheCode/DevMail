@@ -577,11 +577,24 @@ public final class MailService {
         }
     }
 
+    /** Точное совпадение адреса (в том числе внутри группы), без поиска подстроки. */
     private static boolean mentions(Address[] arr, String email) {
         if (arr == null || email == null || email.length() == 0) return false;
-        String e = email.toLowerCase(Locale.ROOT);
         for (Address a : arr) {
-            if (a != null && a.toString().toLowerCase(Locale.ROOT).contains(e)) return true;
+            if (a == null) continue;
+            InternetAddress ia = toAddress(a);
+            if (ia == null) continue;
+            if (ia.isGroup()) {
+                InternetAddress[] members = null;
+                try {
+                    members = ia.getGroup(false);
+                } catch (Exception ignored) {
+                }
+                if (members != null && mentions(members, email)) return true;
+                continue;
+            }
+            String addr = ia.getAddress();
+            if (addr != null && addr.trim().equalsIgnoreCase(email)) return true;
         }
         return false;
     }
