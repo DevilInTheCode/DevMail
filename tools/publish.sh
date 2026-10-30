@@ -5,6 +5,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO="DevilInTheCode/DevMail"
+API="https://api.github.com"
 cd "$ROOT"
 
 TOKEN="${GITHUB_TOKEN:-}"
@@ -18,6 +20,18 @@ fi
 
 VERSION_NAME="$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' "$ROOT/app/AndroidManifest.xml" | head -1)"
 echo "== сборка $VERSION_NAME =="
+
+# Один тег = одна версия. Иначе Obtainium не увидит обновление.
+LATEST_TAG="$(curl -sS -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  "$API/repos/$REPO/releases/latest" | python3 -c 'import sys,json
+try: print(json.load(sys.stdin).get("tag_name") or "")
+except Exception: print("")')"
+if [ "$LATEST_TAG" = "v$VERSION_NAME" ]; then
+  echo "Версия $VERSION_NAME уже опубликована ($LATEST_TAG)." >&2
+  echo "Подними versionName и versionCode в app/AndroidManifest.xml (и VERSION_* в build.sh)." >&2
+  exit 1
+fi
 bash "$ROOT/build.sh"
 
 if [ -n "$(git status --porcelain)" ]; then

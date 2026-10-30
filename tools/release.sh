@@ -2,6 +2,14 @@
 # Публикует собранный APK как GitHub Release (тег v<versionName>).
 # Токен: $GITHUB_TOKEN, либо файл .github_token в корне репозитория.
 # Использование: tools/release.sh [путь-к-apk]
+#
+# Правила, без которых Obtainium не увидит обновление:
+#   * тег ровно "v<versionName>" (v3.3), versionName — обычные числа (3.3, 3.4, 3.10);
+#   * в релизе ровно один APK, имя заканчивается на .apk (DevMail-3.3.apk);
+#   * релиз опубликован (не draft, не prerelease), иначе Obtainium его пропустит;
+#   * versionCode и versionName всегда растут — повторно тот же тег не публикуем.
+# Релиз создаётся черновиком, APK заливается, и только потом черновик публикуется,
+# чтобы Obtainium никогда не увидел релиз без файла.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -11,6 +19,7 @@ UPLOAD="https://uploads.github.com"
 APK="${1:-$ROOT/build/DevMail.apk}"
 MANIFEST="$ROOT/app/AndroidManifest.xml"
 CHANGELOG="$ROOT/CHANGELOG.md"
+FORCE="${FORCE:-0}"
 
 TOKEN="${GITHUB_TOKEN:-}"
 if [ -z "$TOKEN" ] && [ -f "$ROOT/.github_token" ]; then
@@ -26,9 +35,11 @@ VERSION_NAME="$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' "$MANIFEST" 
 VERSION_CODE="$(sed -n 's/.*android:versionCode="\([^"]*\)".*/\1/p' "$MANIFEST" | head -1)"
 TAG="v$VERSION_NAME"
 ASSET="DevMail-$VERSION_NAME.apk"
+SHA="$(sha256sum "$APK" | cut -d' ' -f1)"
 
 echo "== release $TAG (versionCode $VERSION_CODE) =="
 echo "apk: $APK ($(stat -c %s "$APK") байт)"
+echo "sha256: $SHA"
 
 BODY_FILE="$(mktemp)"
 trap 'rm -f "$BODY_FILE"' EXIT
@@ -39,6 +50,7 @@ awk -v v="$VERSION_NAME" '
 if [ ! -s "$BODY_FILE" ]; then
   printf 'DevMail %s (versionCode %s).\n' "$VERSION_NAME" "$VERSION_CODE" > "$BODY_FILE"
 fi
+printf '\n**APK:** `%s` · versionCode %s · SHA-256 `%s`\n' "$ASSET" "$VERSION_CODE" "$SHA" >> "$BODY_FILE"
 
 api() {
   curl -sS -H "Authorization: Bearer $TOKEN" \
@@ -46,32 +58,35 @@ api() {
        -H "X-GitHub-Api-Version: 2022-11-28" "$@"
 }
 
-release_id() {
-  api "$API/repos/$REPO/releases/tags/$TAG" 2>/dev/null \
-    | python3 -c 'import sys,json
+json_id() { python3 -c 'import sys,json
 try: print(json.load(sys.stdin).get("id") or "")
-except Exception: print("")'
-}
+except Exception: print("")'; }
 
-REL_ID="$(release_id)"
-if [ -z "$REL_ID" ]; then
+REL_ID="$(api "$API/repos/$REPO/releases/tags/$TAG" 2>/dev/null | json_id)"
+
+if [ -n "$REL_ID" ]; then
+  if [ "$FORCE" != "1" ]; then
+    echo "Релиз $TAG уже существует (id=$REL_ID)." >&2
+    echo "Obtainium не увидит обновление с тем же тегом — подними versionName/versionCode." >&2
+    echo "Перезалить файл в существующий релиз: FORCE=1 tools/release.sh $APK" >&2
+    exit 1
+  fi
+  echo "релиз уже есть, id=$REL_ID — перезаливаю ассет (FORCE=1)"
+else
   PAYLOAD="$(python3 -c 'import json,sys
 print(json.dumps({"tag_name": sys.argv[1], "name": "DevMail " + sys.argv[2],
                   "body": open(sys.argv[3], encoding="utf-8").read(),
-                  "draft": False, "prerelease": False}))' "$TAG" "$VERSION_NAME" "$BODY_FILE")"
+                  "draft": True, "prerelease": False}))' "$TAG" "$VERSION_NAME" "$BODY_FILE")"
   RESP="$(api -X POST -d "$PAYLOAD" "$API/repos/$REPO/releases")"
-  REL_ID="$(printf '%s' "$RESP" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("id") or "")')"
+  REL_ID="$(printf '%s' "$RESP" | json_id)"
   if [ -z "$REL_ID" ]; then
-    echo "Не удалось создать релиз:" >&2
+    echo "Не удалось создать черновик релиза:" >&2
     printf '%s\n' "$RESP" >&2
     exit 1
   fi
-  echo "создан релиз id=$REL_ID"
-else
-  echo "релиз уже есть, id=$REL_ID — обновляю ассет"
+  echo "создан черновик релиза id=$REL_ID"
 fi
 
-# Удаляем одноимённый ассет, если он уже загружен (перезаливка).
 OLD_ID="$(api "$API/repos/$REPO/releases/$REL_ID/assets" | python3 -c '
 import sys, json
 want = sys.argv[1]
@@ -99,4 +114,8 @@ if [ -z "$URL" ]; then
   printf '%s\n' "$RESP" >&2
   exit 1
 fi
+
+# Публикуем черновик: до этого момента релиза для Obtainium не существует.
+api -X PATCH -d '{"draft": false, "prerelease": false}' \
+  "$API/repos/$REPO/releases/$REL_ID" > /dev/null
 echo "готово: $URL"

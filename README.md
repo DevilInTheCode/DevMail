@@ -4,7 +4,7 @@
 переписка выглядит как чат. Работает по IMAP/SMTP, без сторонних серверов и аккаунтов —
 только ваши ящики.
 
-Версия 3.3 (versionCode 33). Минимальная версия Android — 8.0 (API 26).
+Версия 3.4 (versionCode 34). Минимальная версия Android — 8.0 (API 26).
 
 ## Возможности
 
@@ -55,6 +55,27 @@ KEYSTORE=debug.keystore GITHUB_TOKEN=ghp_xxx tools/publish.sh
 уже собранный APK: `GITHUB_TOKEN=... tools/release.sh build/DevMail.apk`.
 Токен нужен fine-grained с правом **Contents: Read and write** на этот репозиторий;
 его можно положить в `.github_token` (файл в `.gitignore`), чтобы не указывать каждый раз.
+
+## Обновления через Obtainium
+
+Добавить приложение: в Obtainium «Add App» → вставить
+`https://github.com/DevilInTheCode/DevMail` (источник GitHub определится сам).
+Ссылка сразу в приложение: `obtainium://add/https://github.com/DevilInTheCode/DevMail`.
+
+Чтобы Obtainium видел обновления, релиз должен быть таким:
+
+- тег `v<versionName>` — `v3.3`, `v3.4`, `v3.10`; `versionName` в манифесте — то же
+  число без `v`, а `versionCode` строго больше предыдущего;
+- в релизе ровно один APK, имя оканчивается на `.apk` (`DevMail-3.3.apk`); никаких
+  `.zip`, `.apk.zip`, `.xapk`;
+- релиз опубликован: не draft и не prerelease (пререлизы Obtainium по умолчанию
+  пропускает);
+- подпись тем же ключом, что у установленной версии, иначе Android не даст обновить;
+- для тихих фоновых обновлений APK должен быть установлен самим Obtainium.
+
+`tools/release.sh` создаёт черновик релиза, заливает APK и только потом публикует —
+Obtainium никогда не увидит релиз без файла. Повторная публикация с тем же тегом
+блокируется (обновление всё равно не пришло бы), перезалить файл: `FORCE=1`.
 
 ## Структура
 
