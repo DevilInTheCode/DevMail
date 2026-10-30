@@ -158,6 +158,13 @@ public final class L {
         DICT.put("Без имени", "No name");
         DICT.put("Отправитель не распознан", "Sender not recognized");
         DICT.put("Письмо", "Message");
+        DICT.put("Письмо перечитано", "Message re-read");
+        DICT.put("Пропущено письмо", "Message skipped");
+        DICT.put("Удалено пустых писем без заголовков: ", "Removed empty messages without headers: ");
+        DICT.put("пустые заголовки и текст", "empty headers and body");
+        DICT.put("не удалось прочитать", "could not read it");
+        DICT.put("  (raw не сохранён)", "  (raw not saved)");
+        DICT.put(", исправлено ", ", repaired ");
         DICT.put("Нет адреса получателя", "No recipient address");
         DICT.put("Вложение: ", "Attachment: ");
         DICT.put("У этого письма нет адреса отправителя — ответить нельзя. Подробности в журнале отладки.",

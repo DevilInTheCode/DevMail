@@ -364,11 +364,20 @@ public class MainActivity extends Activity {
     private void reportMigration() {
         android.content.SharedPreferences sp = getSharedPreferences(L.PREF, MODE_PRIVATE);
         int n = sp.getInt("bad_peers", 0);
-        if (n <= 0) return;
-        sp.edit().remove("bad_peers").apply();
-        db.log(L.t("Обслуживание"), L.t("Писем с нераспознанным адресом: ") + n
-                + L.t(". Они собраны в ветки «Неизвестный отправитель» и «Скрытые получатели»."
-                + " Подробности — в новом журнале писем."));
+        int junk = sp.getInt("empty_msgs", 0);
+        if (n <= 0 && junk <= 0) return;
+        android.content.SharedPreferences.Editor ed = sp.edit();
+        if (n > 0) ed.remove("bad_peers");
+        if (junk > 0) ed.remove("empty_msgs");
+        ed.apply();
+        if (n > 0) {
+            db.log(L.t("Обслуживание"), L.t("Писем с нераспознанным адресом: ") + n
+                    + L.t(". Они собраны в ветки «Неизвестный отправитель» и «Скрытые получатели»."
+                    + " Подробности — в новом журнале писем."));
+        }
+        if (junk > 0) {
+            db.log(L.t("Обслуживание"), L.t("Удалено пустых писем без заголовков: ") + junk);
+        }
     }
 
     private void showAutoDlDialog() {

@@ -158,6 +158,7 @@ public final class MailService {
         public String inbox = "";
         public int inboxTotal;
         public int failed;
+        public int repaired;
         public String sent = "";
         public String error;
         public String sampleError = "";
@@ -194,6 +195,7 @@ public final class MailService {
             }
 
             log(db, quiet, L.t("Итог"), r.inbox + L.t(": писем ") + r.inboxTotal + L.t(", новых ") + r.added
+                    + (r.repaired > 0 ? L.t(", исправлено ") + r.repaired : "")
                     + L.t(", ошибок ") + r.failed + (r.sampleError.length() > 0 ? " (" + r.sampleError + ")" : ""));
             if (r.error != null) log(db, quiet, L.t("Ошибка"), r.error);
 
@@ -269,9 +271,14 @@ public final class MailService {
             } catch (Exception ignored) {
             }
             if (uid <= 0) continue;
-            if (db.hasMessage(a.id, folderName, uid)) continue;
+            long knownId = db.messageId(a.id, folderName, uid);
+            if (knownId > 0 && !db.needsPeerRepair(knownId)) continue;
+            boolean repair = knownId > 0;
             try {
-                if (storeMessage(ctx, db, a, m, folderName, uid, quiet)) r.added++;
+                if (storeMessage(ctx, db, a, m, folderName, uid, quiet, knownId)) {
+                    if (repair) r.repaired++;
+                    else r.added++;
+                }
             } catch (Exception e) {
                 r.failed++;
                 if (r.sampleError.length() == 0) {
@@ -285,7 +292,9 @@ public final class MailService {
                 }
             }
         }
-        log(db, quiet, L.t("Прочитано"), folderName + L.t(": новых ") + r.added + L.t(", ошибок ") + r.failed);
+        log(db, quiet, L.t("Прочитано"), folderName + L.t(": новых ") + r.added
+                + (r.repaired > 0 ? L.t(", исправлено ") + r.repaired : "")
+                + L.t(", ошибок ") + r.failed);
     }
 
     /** Диагностика для кнопки «Проверить соединение»: какие папки видит сервер. */
@@ -319,7 +328,7 @@ public final class MailService {
     }
 
     private static boolean storeMessage(Context ctx, Db db, Account a, Message m, String folder, long uid,
-                                       boolean quiet) throws Exception {
+                                       boolean quiet, long existingId) throws Exception {
         String msgid = null;
         try {
             String[] h = m.getHeader("Message-ID");
@@ -329,24 +338,36 @@ public final class MailService {
 
         String rawPath = null;
         File raw = null;
+        File tmp = null;
+        boolean rawFailed = false;
         try {
             File dir = new File(ctx.getFilesDir(), "raw");
             if (!dir.exists()) dir.mkdirs();
             raw = new File(dir, a.id + "_" + folder.replaceAll("[^A-Za-z0-9]", "_") + "_" + uid + ".eml");
-            FileOutputStream fos = new FileOutputStream(raw);
+            tmp = new File(dir, raw.getName() + ".part");
+            FileOutputStream fos = new FileOutputStream(tmp);
             try {
                 m.writeTo(fos);
+                fos.getFD().sync();
             } finally {
                 fos.close();
             }
-            if (raw.length() > AttachStore.maxRaw(AttachStore.level(ctx))) {
-                raw.delete();
+            if (tmp.length() > AttachStore.maxRaw(AttachStore.level(ctx))) {
+                tmp.delete();
+                rawFailed = true;
+                raw = null;
+            } else if (!tmp.renameTo(raw)) {
+                tmp.delete();
+                rawFailed = true;
                 raw = null;
             } else {
                 rawPath = raw.getAbsolutePath();
             }
         } catch (Exception e) {
+            rawFailed = true;
             Log.w(TAG, "raw save: " + e);
+            if (tmp != null) tmp.delete();
+            if (raw != null && raw.length() == 0) raw.delete();
         }
 
         // Разбираем сохранённый raw: так размеры вложений и кодировки точные
@@ -381,6 +402,13 @@ public final class MailService {
         try {
             fromArr = src.getFrom();
         } catch (Exception ignored) {
+        }
+        if (fromArr == null || fromArr.length == 0) {
+            // Сырой разбор мог не дать From; у IMAP есть конверт, взятый при fetch.
+            try {
+                fromArr = m.getFrom();
+            } catch (Exception ignored) {
+            }
         }
         InternetAddress fromIA = pickAddress(fromArr, null);
         if (fromIA == null) fromIA = headerAddress(src, "Sender");
@@ -417,9 +445,18 @@ public final class MailService {
                 }
             }
         }
-        // Групповые адреса вида "hidden-recipients": ; — не адрес. Без реального
-        // собеседника письмо уходит в общую ветку, а не в чат со странным именем.
-        boolean knownPeer = peerEmail.indexOf('@') > 0;
+        // Адрес без @ (MAILER-DAEMON, cron) — всё равно отправитель: лучше показать
+        // его, чем чат «Неизвестный отправитель».
+        if (peerEmail.length() == 0) {
+            String token = senderToken(src);
+            if (token.length() == 0) token = senderToken(m);
+            if (token.length() > 0) {
+                peerEmail = token;
+                peerName = "";
+            }
+        }
+        // Групповые адреса вида "hidden-recipients": ; — не адрес.
+        boolean knownPeer = peerEmail.indexOf('@') > 0 || validLocalPeer(peerEmail);
         if (!knownPeer) {
             peerEmail = "";
             peerName = "";
@@ -436,6 +473,16 @@ public final class MailService {
 
         String body = plain.toString().trim();
         if (body.length() == 0) body = htmlToText(html.toString());
+        boolean anyHeader = hdr(src, "From").length() > 0 || hdr(src, "To").length() > 0
+                || hdr(src, "Subject").length() > 0;
+        if (!anyHeader && body.length() == 0 && atts.isEmpty()) {
+            // Сбой загрузки: ни заголовков, ни текста, ни вложений. Хранить нечего —
+            // иначе в списке чатов появляется пустая ветка без отправителя.
+            log(db, quiet, L.t("Пропущено письмо"), a.email + " " + folder + " #" + uid + " — "
+                    + (rawFailed ? L.t("не удалось прочитать") : L.t("пустые заголовки и текст")));
+            if (raw != null) raw.delete();
+            return false;
+        }
         if (body.length() == 0) {
             if (!atts.isEmpty()) {
                 body = "\uD83D\uDCE4 " + atts.get(0).name;
@@ -463,8 +510,9 @@ public final class MailService {
         }
 
         if (!knownPeer) {
-            log(db, quiet, L.t("Отправитель не распознан"), folder + " #" + uid
-                    + "  From: " + hdr(src, "From") + "  To: " + hdr(src, "To"));
+            log(db, quiet, L.t("Отправитель не распознан"), a.email + " " + folder + " #" + uid
+                    + "  From: " + hdr(src, "From") + "  To: " + hdr(src, "To")
+                    + (rawPath == null ? L.t("  (raw не сохранён)") : ""));
         }
         boolean verbose = !quiet && ctx.getSharedPreferences(L.PREF, Context.MODE_PRIVATE)
                 .getBoolean("mail_log", false);
@@ -509,6 +557,26 @@ public final class MailService {
         mm.state = outgoing ? MailMessage.ST_DELIVERED : 0;
         mm.html = html.toString();
 
+        if (existingId > 0) {
+            // Перечитываем письмо, у которого раньше не распознался отправитель.
+            mm.id = existingId;
+            if (!db.updateMessage(existingId, mm)) {
+                if (raw != null) raw.delete();
+                return false;
+            }
+            if (outgoing) db.markDelivered(mm.msgid);
+            db.deleteAttachmentsFor(existingId);
+            for (AttachmentInfo ai : atts) {
+                ai.messageId = existingId;
+                db.addAttachment(ai);
+            }
+            AttachStore.autoFetch(ctx, db, mm, existingId);
+            log(db, quiet, L.t("Письмо перечитано"), a.email + " " + folder + " #" + uid
+                    + " → " + peerEmail);
+            if (raw != null && rawPath == null) raw.delete();
+            return true;
+        }
+
         if (db.isThreadDeleted(mm.threadKey, mm.date)) {
             if (raw != null) raw.delete();
             return false;
@@ -530,6 +598,39 @@ public final class MailService {
     }
 
     // ---------------- разбор MIME ----------------
+
+    /** Адрес-«локальная часть» без @: MAILER-DAEMON, cron, postmaster. */
+    private static boolean validLocalPeer(String s) {
+        if (s == null) return false;
+        String v = s.trim();
+        if (v.length() < 2 || v.length() > 64) return false;
+        for (int i = 0; i < v.length(); i++) {
+            char c = v.charAt(i);
+            boolean ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                    || c == '.' || c == '_' || c == '-' || c == '+';
+            if (!ok) return false;
+        }
+        return true;
+    }
+
+    /** Последняя попытка вытащить отправителя: заголовки From/Sender/Return-Path. */
+    private static String senderToken(Message m) {
+        String[] names = {"From", "Sender", "Return-Path", "Reply-To"};
+        for (String name : names) {
+            String v = hdr(m, name).trim();
+            if (v.length() == 0) continue;
+            int cut = v.indexOf(',');
+            if (cut >= 0) v = v.substring(0, cut);
+            cut = v.indexOf(';');
+            if (cut >= 0) v = v.substring(0, cut);
+            v = v.trim();
+            if (v.length() > 1 && v.charAt(0) == '<' && v.charAt(v.length() - 1) == '>') {
+                v = v.substring(1, v.length() - 1).trim();
+            }
+            if (validLocalPeer(v)) return v;
+        }
+        return "";
+    }
 
     /** Первый настоящий адрес: группы раскрываются, пустые и групповые строки пропускаются. */
     private static InternetAddress pickAddress(Address[] arr, String skip) {

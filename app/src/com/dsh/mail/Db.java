@@ -15,7 +15,7 @@ import java.util.Map;
 public class Db extends SQLiteOpenHelper {
 
     private static final String NAME = "mail.db";
-    private static final int VERSION = 10;
+    private static final int VERSION = 11;
 
     private final Context appCtx;
 
@@ -85,6 +85,40 @@ public class Db extends SQLiteOpenHelper {
                 try {
                     appCtx.getSharedPreferences(L.PREF, Context.MODE_PRIVATE)
                             .edit().putInt("bad_peers", bad).apply();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        if (oldV < 11) {
+            // Совсем пустые письма без отправителя (сбой загрузки: ни заголовков,
+            // ни текста, ни вложений) — это мусор, из-за него появлялись чаты
+            // с пустым именем. Реальные письма не удаляем.
+            int junk = 0;
+            try {
+                Cursor c = d.rawQuery("SELECT COUNT(*) FROM messages WHERE thread_key<>'debug'"
+                        + " AND (peer_email IS NULL OR peer_email='')"
+                        + " AND (subject IS NULL OR subject='')"
+                        + " AND (body IS NULL OR body='' OR body LIKE '%пустое сообщение%'"
+                        + "      OR body LIKE '%(empty message)%')"
+                        + " AND has_attach=0 AND outgoing=0", null);
+                if (c.moveToFirst()) junk = c.getInt(0);
+                c.close();
+            } catch (Exception ignored) {
+            }
+            try {
+                d.execSQL("DELETE FROM messages WHERE thread_key<>'debug'"
+                        + " AND (peer_email IS NULL OR peer_email='')"
+                        + " AND (subject IS NULL OR subject='')"
+                        + " AND (body IS NULL OR body='' OR body LIKE '%пустое сообщение%'"
+                        + "      OR body LIKE '%(empty message)%')"
+                        + " AND has_attach=0 AND outgoing=0");
+                d.execSQL("DELETE FROM attachments WHERE message_id NOT IN (SELECT id FROM messages)");
+            } catch (Exception ignored) {
+            }
+            if (junk > 0) {
+                try {
+                    appCtx.getSharedPreferences(L.PREF, Context.MODE_PRIVATE)
+                            .edit().putInt("empty_msgs", junk).apply();
                 } catch (Exception ignored) {
                 }
             }
@@ -250,6 +284,79 @@ public class Db extends SQLiteOpenHelper {
             return c.moveToFirst();
         } finally {
             c.close();
+        }
+    }
+
+    /** id письма по (аккаунт, папка, uid) или 0. */
+    public long messageId(long accountId, String folder, long uid) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id FROM messages WHERE account_id=? AND folder=? AND uid=? LIMIT 1",
+                new String[]{String.valueOf(accountId), folder, String.valueOf(uid)});
+        try {
+            return c.moveToFirst() ? c.getLong(0) : 0;
+        } finally {
+            c.close();
+        }
+    }
+
+    /** У письма не распознан адрес отправителя — его надо перечитать с сервера. */
+    public boolean peerMissing(long id) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM messages WHERE id=? AND (peer_email IS NULL OR peer_email='') LIMIT 1",
+                new String[]{String.valueOf(id)});
+        try {
+            return c.moveToFirst();
+        } finally {
+            c.close();
+        }
+    }
+
+    /** Письмо входящее и без адреса отправителя — его стоит перечитать с сервера. */
+    public boolean needsPeerRepair(long id) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM messages WHERE id=? AND outgoing=0"
+                        + " AND (peer_email IS NULL OR peer_email='') LIMIT 1",
+                new String[]{String.valueOf(id)});
+        try {
+            return c.moveToFirst();
+        } finally {
+            c.close();
+        }
+    }
+
+    /** Перечитывает письмо поверх старой записи, сохраняя её id и отметку «прочитано». */
+    public boolean updateMessage(long id, MailMessage m) {
+        ContentValues v = new ContentValues();
+        v.put("thread_key", m.threadKey);
+        v.put("peer_name", m.peerName);
+        v.put("peer_email", m.peerEmail);
+        v.put("subject", m.subject);
+        v.put("date", m.date);
+        v.put("snippet", m.snippet);
+        v.put("body", m.body);
+        v.put("seen", m.seen ? 1 : 0);
+        v.put("outgoing", m.outgoing ? 1 : 0);
+        v.put("raw_path", m.rawPath);
+        v.put("has_attach", m.hasAttach ? 1 : 0);
+        v.put("quote_author", m.quoteAuthor);
+        v.put("quote_text", m.quoteText);
+        v.put("state", m.state);
+        v.put("html", m.html);
+        if (m.msgid != null && m.msgid.length() > 0) v.put("msgid", m.msgid);
+        try {
+            return getWritableDatabase().update("messages", v, "id=?",
+                    new String[]{String.valueOf(id)}) > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Старые вложения перечитываемого письма: перед повторным разбором убираем. */
+    public void deleteAttachmentsFor(long messageId) {
+        try {
+            getWritableDatabase().delete("attachments", "message_id=?",
+                    new String[]{String.valueOf(messageId)});
+        } catch (Exception ignored) {
         }
     }
 
