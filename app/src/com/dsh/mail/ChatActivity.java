@@ -70,6 +70,8 @@ public class ChatActivity extends Activity {
     private long newMark;
     /** С какого id считаются непрочитанные: счётчик внизу и подсветка входящих. */
     private long readMark;
+    /** Первая раскладка списка: не отмечаем прочитанное, пока пользователь не увидел подсветку. */
+    private boolean skipMark;
     private TextView avatarView;
     private ImageView avatarImg;
     private AlertDialog contactDialog;
@@ -691,10 +693,12 @@ public class ChatActivity extends Activity {
             public void run() {
                 if (first) {
                     initialScrollDone = true;
+                    skipMark = true;
                     int div = adapter.newDividerPos();
                     if (div >= 0) {
                         jumpTo(div, Ui.dp(ChatActivity.this, 10));
                         updateScrollUi();
+                        skipMark = false;
                         return;
                     }
                     long[] saved = readScroll();
@@ -703,10 +707,14 @@ public class ChatActivity extends Activity {
                         if (pos >= 0) {
                             jumpTo(pos, (int) saved[1]);
                             updateScrollUi();
+                            skipMark = false;
                             return;
                         }
                     }
                     scrollToBottom();
+                    updateScrollUi();
+                    skipMark = false;
+                    return;
                 } else if (atBottom || pendingBottom) {
                     pendingBottom = false;
                     scrollToBottom();
@@ -758,6 +766,7 @@ public class ChatActivity extends Activity {
      * внизу всегда показывал 0.
      */
     private void markSeenAtBottom() {
+        if (skipMark) return;
         if (adapter == null || adapter.getCount() == 0) return;
         if (list.getLastVisiblePosition() < adapter.getCount() - 1) return;
         long max = adapter.maxId();
@@ -1199,6 +1208,7 @@ public class ChatActivity extends Activity {
     @Override
     protected void onPause() {
         LiveSync.setListener(null);
+        if (!debugChat && adapter != null && isAtBottom()) markSeenAtBottom();
         super.onPause();
         saveScroll();
         if (debugChat) return;
