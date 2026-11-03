@@ -160,6 +160,32 @@
                 android:textColor="?attr/c_text2" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/pullBar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="top"
+            android:alpha="0"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:translationY="-48dp">
+
+            <ProgressBar
+                android:id="@+id/pullSpinner"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:indeterminate="true"
+                android:indeterminateTint="?attr/c_accent" />
+
+            <TextView
+                android:id="@+id/pullText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:textSize="13sp"
+                android:textColor="?attr/c_text2" />
+        </LinearLayout>
+
         <ScrollView
             android:id="@+id/settingsPanel"
             android:layout_width="match_parent"

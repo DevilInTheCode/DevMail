@@ -34,6 +34,8 @@ public class MainActivity extends Activity {
     private Db db;
     private ChatAdapter chatAdapter;
     private ListView listChats;
+    private View pullBar;
+    private TextView pullText;
     private View settingsPanel;
     private View empty;
     private TextView title;
@@ -97,8 +99,30 @@ public class MainActivity extends Activity {
         });
 
         listChats = (ListView) findViewById(R.id.listChats);
+        pullBar = findViewById(R.id.pullBar);
+        pullText = (TextView) findViewById(R.id.pullText);
+        if (pullText != null) pullText.setText(L.t("Обновление…"));
         if (listChats instanceof PullListView) {
-            ((PullListView) listChats).setOnPull(this::syncNow);
+            ((PullListView) listChats).setOnPull(new PullListView.OnPull() {
+                @Override
+                public void onPullProgress(float dy) {
+                    pullBar.setAlpha(Math.min(1f, dy / Math.max(1, Ui.dp(MainActivity.this, 32))));
+                    pullBar.setTranslationY(dy - Ui.dp(MainActivity.this, 48));
+                }
+
+                @Override
+                public void onRefresh() {
+                    pullBar.setAlpha(1f);
+                    pullBar.setTranslationY(0);
+                    syncNow(true);
+                }
+
+                @Override
+                public void onPullCancel() {
+                    pullBar.animate().alpha(0f).translationY(-Ui.dp(MainActivity.this, 48))
+                            .setDuration(150).start();
+                }
+            });
         }
         chatAdapter = new ChatAdapter(this);
         listChats.setAdapter(chatAdapter);
@@ -969,14 +993,32 @@ public class MainActivity extends Activity {
     }
 
     private void syncNow() {
-        if (syncing) return;
+        syncNow(false);
+    }
+
+    /** Возвращает список чатов на место и прячет подпись «Обновление…». */
+    private void finishPullRefresh() {
+        if (listChats instanceof PullListView) ((PullListView) listChats).finishRefresh();
+        if (pullBar != null) {
+            pullBar.animate().alpha(0f).translationY(-Ui.dp(this, 48)).setDuration(150).start();
+        }
+    }
+
+    private void syncNow(boolean fromPull) {
+        if (syncing) {
+            if (fromPull) finishPullRefresh();
+            return;
+        }
         final List<Account> accs = db.accounts();
         if (accs.isEmpty()) {
             Toast.makeText(this, L.t("Сначала добавьте аккаунт"), Toast.LENGTH_SHORT).show();
+            if (fromPull) finishPullRefresh();
             return;
         }
         syncing = true;
-        Toast.makeText(this, L.t("Синхронизация…"), Toast.LENGTH_SHORT).show();
+        if (!fromPull) {
+            Toast.makeText(this, L.t("Синхронизация…"), Toast.LENGTH_SHORT).show();
+        }
         new Thread(() -> {
             try {
             final StringBuilder errors = new StringBuilder();
@@ -1006,6 +1048,7 @@ public class MainActivity extends Activity {
             final int fAdded = added;
             ui.post(() -> {
                 syncing = false;
+                finishPullRefresh();
                 if (isFinishing()) return;
                 reload();
                 if (errors.length() > 0) {
@@ -1025,6 +1068,7 @@ public class MainActivity extends Activity {
             db.log(L.t("Сбой синхронизации"), report);
             ui.post(() -> {
                 syncing = false;
+                finishPullRefresh();
                 if (isFinishing()) return;
                 Ui.copy(MainActivity.this, report);
                 new AlertDialog.Builder(MainActivity.this)
