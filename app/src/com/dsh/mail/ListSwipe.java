@@ -25,6 +25,8 @@ public class ListSwipe implements View.OnTouchListener {
 
     private final ListView list;
     private final boolean rightOnly;
+    /** Свайп вправо срабатывает сразу, без сдвига и «выделения» строки. */
+    private final boolean instantRight;
     private final Content content;
     private final Callback cb;
     private final int slop;
@@ -33,13 +35,20 @@ public class ListSwipe implements View.OnTouchListener {
     private float downY;
     private float startX;
     private boolean active;
+    private boolean instantFired;
     private int shift;
     private View moving;
     private int pos = -1;
 
     public ListSwipe(ListView list, boolean rightOnly, Content content, Callback cb) {
+        this(list, rightOnly, false, content, cb);
+    }
+
+    public ListSwipe(ListView list, boolean rightOnly, boolean instantRight,
+                     Content content, Callback cb) {
         this.list = list;
         this.rightOnly = rightOnly;
+        this.instantRight = instantRight;
         this.content = content;
         this.cb = cb;
         this.slop = ViewConfiguration.get(list.getContext()).getScaledTouchSlop();
@@ -65,8 +74,22 @@ public class ListSwipe implements View.OnTouchListener {
                 shift = 0;
                 moving = null;
                 pos = -1;
+                instantFired = false;
                 return false;
             case MotionEvent.ACTION_MOVE: {
+                if (!active && !instantFired) {
+                    float fx = e.getX() - downX;
+                    float fy = e.getY() - downY;
+                    if (instantRight && fx > slop && fx > Math.abs(fy) * 1.2f) {
+                        int p = list.pointToPosition((int) downX, (int) downY);
+                        if (p >= 0) {
+                            instantFired = true;
+                            list.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                            cb.onSwipe(p, 1);
+                        }
+                        return true;
+                    }
+                }
                 if (!active) {
                     float dx0 = e.getX() - downX;
                     float dy0 = e.getY() - downY;
@@ -93,7 +116,13 @@ public class ListSwipe implements View.OnTouchListener {
             }
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL: {
-                if (!active) return false;
+                if (!active) {
+                    if (instantFired) {
+                        instantFired = false;
+                        return true;
+                    }
+                    return false;
+                }
                 active = false;
                 boolean fire = e.getActionMasked() == MotionEvent.ACTION_UP
                         && Math.abs(shift) > maxShift * 0.55f;

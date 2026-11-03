@@ -174,7 +174,30 @@ public final class MailService {
     }
 
     /** quiet=true — не писать в журнал отладки (живое соединение проверяет часто). */
+    private static final java.util.concurrent.ConcurrentHashMap<Long, Object> SYNC_LOCKS =
+            new java.util.concurrent.ConcurrentHashMap<Long, Object>();
+    private static final Object SYNC_PREFS_LOCK = new Object();
+
+    private static Object lockFor(long accountId) {
+        Long key = Long.valueOf(accountId);
+        Object l = SYNC_LOCKS.get(key);
+        if (l == null) {
+            Object made = new Object();
+            l = SYNC_LOCKS.putIfAbsent(key, made);
+            if (l == null) l = made;
+        }
+        return l;
+    }
+
     public static SyncResult syncAccount(Context ctx, Db db, Account a, boolean quiet) throws Exception {
+        // Один аккаунт — одна синхронизация: параллельные запуски (жест + LiveSync)
+        // ломали вычисление отсечки «старых» писем и журнал дублировался.
+        synchronized (lockFor(a.id)) {
+            return syncAccountLocked(ctx, db, a, quiet);
+        }
+    }
+
+    private static SyncResult syncAccountLocked(Context ctx, Db db, Account a, boolean quiet) throws Exception {
         SyncResult r = new SyncResult();
         Store store = openStore(a);
         try {
@@ -226,7 +249,7 @@ public final class MailService {
         }
         if (a.lastSync == 0) db.baselineUnseen();
         db.touchSync(a.id, System.currentTimeMillis());
-        db.trimDebug(400);
+        db.trimDebug(100);
         return r;
     }
 
@@ -262,13 +285,15 @@ public final class MailService {
      * Если письма уже есть (обновление приложения), обрезания нет.
      */
     private static long syncSince(Context ctx, Db db, Account a) {
-        SharedPreferences p = ctx.getSharedPreferences(SYNC_PREFS, 0);
-        String key = "since_" + a.id;
-        long v = p.getLong(key, -1);
-        if (v >= 0) return v;
-        v = db.messageCount(a.id) > 0 ? 0 : System.currentTimeMillis();
-        p.edit().putLong(key, v).apply();
-        return v;
+        synchronized (SYNC_PREFS_LOCK) {
+            SharedPreferences p = ctx.getSharedPreferences(SYNC_PREFS, 0);
+            String key = "since_" + a.id;
+            long v = p.getLong(key, -1);
+            if (v >= 0) return v;
+            v = db.messageCount(a.id) > 0 ? 0 : System.currentTimeMillis();
+            p.edit().putLong(key, v).commit();
+            return v;
+        }
     }
 
     private static boolean olderThan(Message m, long since) {
@@ -304,12 +329,14 @@ public final class MailService {
             if (uid <= 0) continue;
             long knownId = db.messageId(a.id, folderName, uid);
             if (knownId > 0 && !db.needsPeerRepair(knownId)) continue;
-            // Старые письма (до первого запуска) не качаем; уже сохранённые чиним как обычно.
-            if (knownId == 0 && since > 0 && olderThan(m, since)) {
-                r.oldSkipped++;
+            // Старые письма (до первого запуска) не качаем и не перечитываем:
+            // иначе каждый синк заново тянул годовалые письма и забивал журнал.
+            if (since > 0 && olderThan(m, since)) {
+                if (knownId == 0) r.oldSkipped++;
                 continue;
             }
             boolean repair = knownId > 0;
+            if (repair && r.repaired >= 30) continue;
             try {
                 if (storeMessage(ctx, db, a, m, folderName, uid, quiet, knownId)) {
                     if (repair) r.repaired++;
@@ -607,8 +634,7 @@ public final class MailService {
                 db.addAttachment(ai);
             }
             AttachStore.autoFetch(ctx, db, mm, existingId);
-            log(db, quiet, L.t("Письмо перечитано"), a.email + " " + folder + " #" + uid
-                    + " → " + peerEmail);
+            Log.d(TAG, "repaired " + a.email + " " + folder + " #" + uid + " -> " + peerEmail);
             if (raw != null && rawPath == null) raw.delete();
             return true;
         }

@@ -226,29 +226,11 @@
 
                 <TextView style="@style/Section" android:text="ТЕМА" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingLeft="11dp"
-                    android:paddingRight="11dp"
-                    android:paddingBottom="16dp">
-
-                    <TextView
-                        android:id="@+id/themeNight"
-                        style="@style/Chip"
-                        android:text="Ночь" />
-
-                    <TextView
-                        android:id="@+id/themeDay"
-                        style="@style/Chip"
-                        android:text="День" />
-
-                    <TextView
-                        android:id="@+id/themeCyber"
-                        style="@style/Chip"
-                        android:text="Киберпанк" />
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/btnTheme"
+                    style="@style/Card"
+                    android:textSize="14sp"
+                    android:textColor="?attr/c_text" />
 
                 <TextView style="@style/Section" android:text="ЯЗЫК" />
 

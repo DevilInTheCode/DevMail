@@ -126,7 +126,7 @@ public class MainActivity extends Activity {
         }
         chatAdapter = new ChatAdapter(this);
         listChats.setAdapter(chatAdapter);
-        swipe = new ListSwipe(listChats, false,
+        swipe = new ListSwipe(listChats, false, true,
                 row -> row instanceof android.view.ViewGroup
                         && ((android.view.ViewGroup) row).getChildCount() > 1
                         ? ((android.view.ViewGroup) row).getChildAt(1) : row,
@@ -196,9 +196,7 @@ public class MainActivity extends Activity {
         findViewById(R.id.btnLangRu).setOnClickListener(v -> pickLang(L.RU));
         findViewById(R.id.btnLangEn).setOnClickListener(v -> pickLang(L.EN));
 
-        findViewById(R.id.themeNight).setOnClickListener(v -> pickTheme(Themes.NIGHT));
-        findViewById(R.id.themeDay).setOnClickListener(v -> pickTheme(Themes.DAY));
-        findViewById(R.id.themeCyber).setOnClickListener(v -> pickTheme(Themes.CYBER));
+        findViewById(R.id.btnTheme).setOnClickListener(v -> showThemeList());
 
         if (Build.VERSION.SDK_INT >= 33) {
             try {
@@ -522,18 +520,16 @@ public class MainActivity extends Activity {
         recreate();
     }
 
+    private void showThemeList() {
+        new AlertDialog.Builder(this)
+                .setTitle(L.t("Тема оформления"))
+                .setItems(Themes.names(this), (d, which) -> pickTheme(which))
+                .show();
+    }
+
     private void applyThemeChips() {
-        int active = Themes.current(this);
-        int accent = Ui.attr(this, R.attr.c_accent);
-        int text2 = Ui.attr(this, R.attr.c_text2);
-        int[] ids = {R.id.themeNight, R.id.themeDay, R.id.themeCyber};
-        for (int i = 0; i < ids.length; i++) {
-            TextView t = (TextView) findViewById(ids[i]);
-            boolean on = i == active;
-            t.setBackgroundResource(on ? R.drawable.btn_accent : R.drawable.chip_bg);
-            t.setTextColor(on ? Ui.attr(this, R.attr.c_on_accent) : text2);
-            t.setTypeface(null, on ? Typeface.BOLD : Typeface.NORMAL);
-        }
+        TextView t = (TextView) findViewById(R.id.btnTheme);
+        t.setText(L.t("Тема оформления") + ": " + Themes.name(this, Themes.current(this)));
     }
 
     private void showChatMenu(final ChatItem it) {
@@ -902,6 +898,7 @@ public class MainActivity extends Activity {
     }
 
     private void reload() {
+        db.trimDebug(100);
         List<Account> accs = db.accounts();
         boolean known = false;
         for (Account a : accs) {
@@ -944,6 +941,7 @@ public class MainActivity extends Activity {
         }
         chatAdapter.setSelected(selected);
         applySelectionUi();
+        Shortcuts.update(this, chats);
         updateAccountRows(accs);
         int unread = 0;
         for (ChatItem c : chats) unread += c.unread;

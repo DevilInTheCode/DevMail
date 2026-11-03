@@ -53,8 +53,8 @@
         <item name="c_danger">#D32F2F</item>
     </style>
 
-    <!-- КИБЕРПАНК -->
-    <style name="Theme.DevMail.Cyber" parent="android:Theme.Material.NoActionBar">
+    <!-- NEON -->
+    <style name="Theme.DevMail.Neon" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">#05010B</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
@@ -77,6 +77,59 @@
         <item name="c_chip">#1D0A38</item>
         <item name="c_stroke">#5A1FA8</item>
         <item name="c_danger">#FF3B6B</item>
+    </style>
+
+
+    <!-- AMOLED: чистый чёрный, высокий контраст -->
+    <style name="Theme.DevMail.Amoled" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="c_bg">#000000</item>
+        <item name="c_bar">#0A0A0A</item>
+        <item name="c_bubble_in">#FF121212</item>
+        <item name="c_bubble_unread">#FF123B32</item>
+        <item name="c_bubble_out">#FF0E2A22</item>
+        <item name="c_text">#FFFFFF</item>
+        <item name="c_text2">#9AA0A6</item>
+        <item name="c_accent">#00E0A4</item>
+        <item name="c_accent2">#00B386</item>
+        <item name="c_ripple">#26FFFFFF</item>
+        <item name="c_on_accent">#000000</item>
+        <item name="c_badge">#00E0A4</item>
+        <item name="c_divider">#1E1E1E</item>
+        <item name="c_field">#0D0D0D</item>
+        <item name="c_chip">#0A0A0A</item>
+        <item name="c_stroke">#242424</item>
+        <item name="c_danger">#FF5A5A</item>
+    </style>
+
+    <!-- RETRO: янтарный терминал 80-90-х -->
+    <style name="Theme.DevMail.Retro" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0F0C08</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="c_bg">#0F0C08</item>
+        <item name="c_bar">#1A140C</item>
+        <item name="c_bubble_in">#FF1E1810</item>
+        <item name="c_bubble_unread">#FF3A2C12</item>
+        <item name="c_bubble_out">#FF2A1F0F</item>
+        <item name="c_text">#E8C07A</item>
+        <item name="c_text2">#A8814A</item>
+        <item name="c_accent">#FFB000</item>
+        <item name="c_accent2">#FF8C00</item>
+        <item name="c_ripple">#33FFB000</item>
+        <item name="c_on_accent">#0F0C08</item>
+        <item name="c_badge">#FFB000</item>
+        <item name="c_divider">#3A2C1A</item>
+        <item name="c_field">#171009</item>
+        <item name="c_chip">#221A10</item>
+        <item name="c_stroke">#4A3820</item>
+        <item name="c_danger">#E0603A</item>
     </style>
 
 </resources>

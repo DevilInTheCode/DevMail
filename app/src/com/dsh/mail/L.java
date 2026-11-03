@@ -290,6 +290,7 @@ public final class L {
         DICT.put("ТЕМА", "THEME");
         DICT.put("Текст письма", "Message text");
         DICT.put("Тема", "Subject");
+        DICT.put("Тема оформления", "Appearance");
         DICT.put("Только вручную", "Manual only");
         DICT.put("Убрать фон", "Remove background");
         DICT.put("Удалить", "Delete");
