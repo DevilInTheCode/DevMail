@@ -77,10 +77,11 @@ public class ListSwipe implements View.OnTouchListener {
                 instantFired = false;
                 return false;
             case MotionEvent.ACTION_MOVE: {
-                if (!active && !instantFired) {
+                if (instantFired) return true;
+                if (!active) {
                     float fx = e.getX() - downX;
                     float fy = e.getY() - downY;
-                    if (instantRight && fx > slop && fx > Math.abs(fy) * 1.2f) {
+                    if (instantRight && fx > slop * 1.5f && fx > Math.abs(fy) * 1.2f) {
                         int p = list.pointToPosition((int) downX, (int) downY);
                         if (p >= 0) {
                             instantFired = true;
