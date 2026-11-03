@@ -591,7 +591,7 @@ public final class MailService {
         mm.rawPath = rawPath;
         mm.hasAttach = !atts.isEmpty();
         mm.state = outgoing ? MailMessage.ST_DELIVERED : 0;
-        mm.html = html.toString();
+        mm.html = HtmlText.clean(html.toString());
 
         if (existingId > 0) {
             // Перечитываем письмо, у которого раньше не распознался отправитель.

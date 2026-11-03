@@ -330,7 +330,7 @@ public class MsgAdapter extends BaseAdapter {
         CharSequence text = m.body == null ? "" : m.body;
         if (!out && m.html != null && m.html.trim().length() > 0) {
             try {
-                CharSequence rich = Html.fromHtml(m.html, Html.FROM_HTML_MODE_LEGACY);
+                CharSequence rich = Html.fromHtml(HtmlText.clean(m.html), Html.FROM_HTML_MODE_LEGACY);
                 if (rich != null && rich.length() > 0) text = rich;
             } catch (Throwable ignored) {
             }

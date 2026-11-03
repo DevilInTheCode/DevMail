@@ -97,6 +97,9 @@ public class MainActivity extends Activity {
         });
 
         listChats = (ListView) findViewById(R.id.listChats);
+        if (listChats instanceof PullListView) {
+            ((PullListView) listChats).setOnPull(this::syncNow);
+        }
         chatAdapter = new ChatAdapter(this);
         listChats.setAdapter(chatAdapter);
         swipe = new ListSwipe(listChats, false,
