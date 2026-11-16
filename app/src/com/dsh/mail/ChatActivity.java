@@ -890,6 +890,15 @@ public class ChatActivity extends Activity {
         if (im != null) im.showSoftInput(chatSearchInput, 0);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (searching) {
+            closeSearch();
+            return;
+        }
+        super.onBackPressed();
+    }
+
     private void closeSearch() {
         searching = false;
         chatSearchBar.setVisibility(View.GONE);
@@ -904,7 +913,9 @@ public class ChatActivity extends Activity {
     }
 
     private boolean hasText(String s, String needle) {
-        return s != null && s.toLowerCase(Locale.ROOT).contains(needle);
+        if (s == null) return false;
+        String text = s.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+        return text.contains(needle);
     }
 
     private void renderSearch() {
@@ -913,7 +924,7 @@ public class ChatActivity extends Activity {
             load();
             return;
         }
-        String needle = q.toLowerCase(Locale.ROOT);
+        String needle = q.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
         List<MailMessage> all = db.thread(threadKey);
         List<MailMessage> hits = new ArrayList<MailMessage>();
         for (MailMessage m : all) {

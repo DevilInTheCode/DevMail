@@ -571,22 +571,52 @@ public class Db extends SQLiteOpenHelper {
         return L.t("Без имени");
     }
 
-    /** Поиск по имени, адресу, теме, сниппету и тексту письма (без учёта регистра). */
+    /** Схлопывает любые пробелы (включая переводы строк) в один. */
+    private static String norm(String v) {
+        if (v == null) return null;
+        StringBuilder b = new StringBuilder(v.length());
+        boolean space = false;
+        for (int i = 0; i < v.length(); i++) {
+            char ch = v.charAt(i);
+            if (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\u00A0') {
+                space = true;
+            } else {
+                if (space && b.length() > 0) b.append(' ');
+                space = false;
+                b.append(ch);
+            }
+        }
+        return b.toString().toLowerCase(Locale.ROOT);
+    }
+
+    /** Поиск по имени, адресу, теме, сниппету и всему тексту письма (без учёта регистра). */
     public List<ChatItem> searchThreads(String q, int limit) {
         String s = q == null ? "" : q.trim();
         if (s.length() == 0) return new ArrayList<ChatItem>();
-        final String needle = s.toLowerCase(Locale.ROOT);
+        final String needle = norm(s);
+        if (needle == null || needle.length() == 0) return new ArrayList<ChatItem>();
         List<String> keys = new ArrayList<String>();
+        // Раньше смотрели только последние 1500 писем — старые и «середина» длинной
+        // переписки не находились. Теперь просматриваем все письма, но не дольше
+        // 40 найденных веток.
         Cursor c = getReadableDatabase().rawQuery(
                 "SELECT thread_key, peer_name, peer_email, subject, snippet, body FROM messages"
-                        + " ORDER BY date DESC LIMIT 1500", null);
+                        + " ORDER BY date DESC", null);
         try {
-            while (c.moveToNext() && keys.size() < 40) {
+            while (c.moveToNext()) {
+                if (keys.size() >= 40) break;
                 String k = c.getString(0);
                 if (k == null || keys.contains(k)) continue;
+                boolean phrase = needle.indexOf(' ') >= 0;
                 for (int i = 1; i <= 5; i++) {
-                    String v = c.isNull(i) ? null : c.getString(i);
-                    if (v != null && v.toLowerCase(Locale.ROOT).contains(needle)) {
+                    String raw = c.isNull(i) ? null : c.getString(i);
+                    if (raw == null) continue;
+                    boolean hit = raw.toLowerCase(Locale.ROOT).contains(needle);
+                    if (!hit && phrase) {
+                        String v = norm(raw);
+                        hit = v != null && v.contains(needle);
+                    }
+                    if (hit) {
                         keys.add(k);
                         break;
                     }

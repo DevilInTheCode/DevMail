@@ -36,6 +36,7 @@ public class ListSwipe implements View.OnTouchListener {
     private float startX;
     private boolean active;
     private boolean instantFired;
+    private int instantPos = -1;
     private int shift;
     private View moving;
     private int pos = -1;
@@ -75,6 +76,7 @@ public class ListSwipe implements View.OnTouchListener {
                 moving = null;
                 pos = -1;
                 instantFired = false;
+                instantPos = -1;
                 return false;
             case MotionEvent.ACTION_MOVE: {
                 if (instantFired) return true;
@@ -85,8 +87,8 @@ public class ListSwipe implements View.OnTouchListener {
                         int p = list.pointToPosition((int) downX, (int) downY);
                         if (p >= 0) {
                             instantFired = true;
-                            list.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                            cb.onSwipe(p, 1);
+                            instantPos = p;
+                            cancelListGesture(e);
                         }
                         return true;
                     }
@@ -107,6 +109,7 @@ public class ListSwipe implements View.OnTouchListener {
                     active = true;
                     startX = e.getX();
                     shift = 0;
+                    cancelListGesture(e);
                 }
                 float dx = e.getX() - startX;
                 if (rightOnly && dx < 0) dx = 0;
@@ -119,7 +122,14 @@ public class ListSwipe implements View.OnTouchListener {
             case MotionEvent.ACTION_CANCEL: {
                 if (!active) {
                     if (instantFired) {
+                        boolean up = e.getActionMasked() == MotionEvent.ACTION_UP;
+                        int p = instantPos;
                         instantFired = false;
+                        instantPos = -1;
+                        if (up && p >= 0) {
+                            list.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                            cb.onSwipe(p, 1);
+                        }
                         return true;
                     }
                     return false;
@@ -142,6 +152,23 @@ public class ListSwipe implements View.OnTouchListener {
             }
             default:
                 return false;
+        }
+    }
+
+    /**
+     * ListView уже получил ACTION_DOWN (мы вернули false), поэтому его таймер
+     * долгого нажатия продолжает тикать. Отменяем и сам таймер, и начатый жест,
+     * иначе свайп вправо превращается в случайное «выделение» диалога.
+     */
+    private void cancelListGesture(MotionEvent e) {
+        try {
+            list.cancelLongPress();
+            list.setPressed(false);
+            MotionEvent cancel = MotionEvent.obtain(e.getDownTime(), e.getEventTime(),
+                    MotionEvent.ACTION_CANCEL, e.getX(), e.getY(), 0);
+            list.onTouchEvent(cancel);
+            cancel.recycle();
+        } catch (Throwable ignored) {
         }
     }
 }

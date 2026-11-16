@@ -50,6 +50,13 @@ public class MainActivity extends Activity {
     private ListSwipe swipe;
     private final Set<String> selected = new LinkedHashSet<String>();
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private final Runnable searchTick = new Runnable() {
+        @Override
+        public void run() {
+            reload();
+        }
+    };
     /** Выбранный аккаунт для списка чатов: -1 — все аккаунты. */
     private long selAccount = -1;
     private TextView btnAccount;
@@ -94,7 +101,8 @@ public class MainActivity extends Activity {
             @Override
             public void afterTextChanged(android.text.Editable e) {
                 query = e.toString().trim();
-                reload();
+                searchHandler.removeCallbacks(searchTick);
+                searchHandler.postDelayed(searchTick, 220);
             }
         });
 
@@ -134,11 +142,10 @@ public class MainActivity extends Activity {
                     if (selMode || pos < 0 || pos >= chatAdapter.getCount()) return;
                     ChatItem it = chatAdapter.item(pos);
                     if (dir > 0) {
+                        if (it.unread == 0) return;
                         db.markThreadSeen(it.threadKey);
                         Notifier.cancelThread(MainActivity.this, it.threadKey);
                         reload();
-                        Toast.makeText(MainActivity.this, L.t("Прочитано") + ": " + it.name,
-                                Toast.LENGTH_SHORT).show();
                     } else {
                         confirmDeleteChat(it);
                     }
@@ -983,6 +990,14 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (searchBar != null && searchBar.getVisibility() == View.VISIBLE) {
+            toggleSearch();
+            return;
+        }
+        if (tab != 0) {
+            showTab(0);
+            return;
+        }
         if (selMode) {
             exitSelection();
             return;
