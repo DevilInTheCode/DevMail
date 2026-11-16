@@ -41,20 +41,6 @@ keytool -genkeypair -keystore debug.keystore -alias androiddebugkey \
   -dname "CN=DevMail Debug,O=DevMail,C=RU"
 ```
 
-## Релизы
-
-APK публикуется в GitHub Releases тем же коммитом, что и код:
-
-```
-PREFIX=/path/to/toolchain ANDROID_JAR=/path/to/android-35/android.jar \
-KEYSTORE=debug.keystore GITHUB_TOKEN=ghp_xxx tools/publish.sh
-```
-
-`tools/publish.sh` собирает APK, коммитит изменения, пушит `main` и создаёт
-релиз `v<versionName>` с файлом `DevMail-<versionName>.apk`. Отдельно опубликовать
-уже собранный APK: `GITHUB_TOKEN=... tools/release.sh build/DevMail.apk`.
-Токен нужен fine-grained с правом **Contents: Read and write** на этот репозиторий;
-его можно положить в `.github_token` (файл в `.gitignore`), чтобы не указывать каждый раз.
 
 ## Обновления через Obtainium
 
@@ -62,20 +48,6 @@ KEYSTORE=debug.keystore GITHUB_TOKEN=ghp_xxx tools/publish.sh
 `https://github.com/DevilInTheCode/DevMail` (источник GitHub определится сам).
 Ссылка сразу в приложение: `obtainium://add/https://github.com/DevilInTheCode/DevMail`.
 
-Чтобы Obtainium видел обновления, релиз должен быть таким:
-
-- тег — просто номер версии без букв: `3.5`, `3.6`, `3.10`; он же `versionName` в
-  манифесте, а `versionCode` строго больше предыдущего;
-- в релизе ровно один APK с постоянным именем `DevMail.apk`; никаких `.zip`,
-  `.apk.zip`, `.xapk`;
-- релиз опубликован: не draft и не prerelease (пререлизы Obtainium по умолчанию
-  пропускает);
-- подпись тем же ключом, что у установленной версии, иначе Android не даст обновить;
-- для тихих фоновых обновлений APK должен быть установлен самим Obtainium.
-
-`tools/release.sh` создаёт черновик релиза, заливает APK и только потом публикует —
-Obtainium никогда не увидит релиз без файла. Повторная публикация с тем же тегом
-блокируется (обновление всё равно не пришло бы), перезалить файл: `FORCE=1`.
 
 ## Структура
 
