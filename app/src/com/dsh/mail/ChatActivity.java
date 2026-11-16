@@ -91,6 +91,9 @@ public class ChatActivity extends Activity {
     private List<MailMessage> searchMatches;
     private int searchIdx = -1;
     private boolean searching;
+    /** id письма, к которому надо прокрутить (из результатов поиска в списке). */
+    private long pendingJump;
+    private String searchWord = "";
     private boolean floatShown;
     private boolean initialScrollDone;
     private ListSwipe swipe;
@@ -109,6 +112,9 @@ public class ChatActivity extends Activity {
         peerName = getIntent().getStringExtra("name");
         peerEmail = getIntent().getStringExtra("email");
         accountId = getIntent().getLongExtra("account", 0);
+        pendingJump = getIntent().getLongExtra("msg", 0);
+        String q = getIntent().getStringExtra("q");
+        searchWord = q == null ? "" : q.trim();
         if (peerEmail == null) peerEmail = "";
         if (peerEmail.indexOf('@') <= 0) peerEmail = "";
         if (peerName == null || peerName.trim().isEmpty()) peerName = peerEmail;
@@ -685,12 +691,23 @@ public class ChatActivity extends Activity {
         final int anchorTop = list.getChildAt(0) == null ? 0 : list.getChildAt(0).getTop();
         final boolean atBottom = isAtBottom();
         final boolean first = !initialScrollDone;
+        adapter.setSearchNeedle(searchWord);
         adapter.setHighlight(0);
         adapter.setReadMark(readMark);
         adapter.setMessages(msgs, map, newMark);
         list.post(new Runnable() {
             @Override
             public void run() {
+                if (pendingJump > 0) {
+                    int pos = adapter.positionOfMessage(pendingJump);
+                    pendingJump = 0;
+                    initialScrollDone = true;
+                    if (pos >= 0) {
+                        jumpTo(pos, Ui.dp(ChatActivity.this, 70));
+                        updateScrollUi();
+                        return;
+                    }
+                }
                 if (first) {
                     initialScrollDone = true;
                     skipMark = true;
@@ -906,6 +923,7 @@ public class ChatActivity extends Activity {
         chatSearchCount.setText("");
         searchMatches = null;
         searchIdx = -1;
+        adapter.setSearchNeedle("");
         adapter.setHighlight(0);
         InputMethodManager im = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (im != null) im.hideSoftInputFromWindow(chatSearchInput.getWindowToken(), 0);
@@ -943,6 +961,7 @@ public class ChatActivity extends Activity {
         for (MailMessage m : hits) {
             if (m.hasAttach) map.put(m.id, db.attachments(m.id));
         }
+        adapter.setSearchNeedle(needle);
         adapter.setMessages(hits, map, 0);
         chatSearchCount.setText(hits.isEmpty() ? "0/0" : (searchIdx + 1) + "/" + hits.size());
         if (searchIdx >= 0) {

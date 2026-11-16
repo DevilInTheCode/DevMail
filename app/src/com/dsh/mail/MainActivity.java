@@ -162,6 +162,10 @@ public class MainActivity extends Activity {
             i.putExtra("name", it.name);
             i.putExtra("email", it.email);
             i.putExtra("account", it.accountId);
+            if (it.messageId > 0) {
+                i.putExtra("msg", it.messageId);
+                i.putExtra("q", query);
+            }
             startActivity(i);
         });
 
@@ -918,7 +922,7 @@ public class MainActivity extends Activity {
         applyAccountUi(accs);
         List<ChatItem> chats = query.length() == 0
                 ? (selAccount == -1 ? db.chats() : db.chatsFor(selAccount))
-                : db.searchThreads(query, 100);
+                : db.searchMessages(query, 80);
         if (selAccount != -1) {
             for (int i = chats.size() - 1; i >= 0; i--) {
                 if (chats.get(i).accountId != selAccount) chats.remove(i);

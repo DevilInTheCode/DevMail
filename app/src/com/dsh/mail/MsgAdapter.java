@@ -3,7 +3,11 @@ package com.dsh.mail;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.StyleSpan;
 import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -44,6 +48,8 @@ public class MsgAdapter extends BaseAdapter {
     private long highlightId;
     /** id, до которого всё прочитано: более новые входящие подсвечиваются. */
     private long readMark;
+    /** Слово поиска: подсвечиваем именно его в тексте письма. */
+    private String needle = "";
 
     public MsgAdapter(Context c) {
         ctx = c;
@@ -108,6 +114,10 @@ public class MsgAdapter extends BaseAdapter {
                 box.addView(row);
             }
         }
+    }
+
+    public void setSearchNeedle(String q) {
+        needle = q == null ? "" : q.trim();
     }
 
     public void setHighlight(long messageId) {
@@ -336,11 +346,13 @@ public class MsgAdapter extends BaseAdapter {
             }
         }
         body.setText(text);
+        if (needle.length() > 0) highlightWord(body);
         boolean hasAtts = atts.get(m.id) != null && !atts.get(m.id).isEmpty();
         String empty = L.t("(пустое сообщение)");
         body.setVisibility(hasAtts && (text.length() == 0 || empty.equals(text.toString()))
                 ? View.GONE : View.VISIBLE);
-        body.setBackgroundResource(highlightId != 0 && m.id == highlightId ? R.drawable.hl_bg : 0);
+        body.setBackgroundResource(needle.length() == 0 && highlightId != 0 && m.id == highlightId
+                ? R.drawable.hl_bg : 0);
         body.setMovementMethod(text instanceof Spanned ? LinkMovementMethod.getInstance() : null);
         bindAttachments(v, m);
         TextView meta = (TextView) v.findViewById(R.id.meta);
@@ -364,5 +376,27 @@ public class MsgAdapter extends BaseAdapter {
             }
         }
         return v;
+    }
+
+    /** Подсветка найденного слова внутри текста пузыря (не всего сообщения). */
+    private void highlightWord(TextView body) {
+        CharSequence base = body.getText();
+        if (base == null || base.length() == 0) return;
+        String low = base.toString().toLowerCase(java.util.Locale.ROOT);
+        String n = needle.toLowerCase(java.util.Locale.ROOT);
+        int idx = low.indexOf(n);
+        if (idx < 0) return;
+        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        int accent = Ui.attr(ctx, R.attr.c_accent);
+        int bg = (accent & 0x00FFFFFF) | 0x66000000;
+        int guard = 0;
+        while (idx >= 0 && guard++ < 200) {
+            sb.setSpan(new BackgroundColorSpan(bg), idx, idx + n.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), idx, idx + n.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            idx = low.indexOf(n, idx + n.length());
+        }
+        body.setText(sb);
     }
 }

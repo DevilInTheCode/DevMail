@@ -3,6 +3,10 @@ package com.dsh.mail;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -104,7 +108,7 @@ public class ChatAdapter extends BaseAdapter {
         time.setText(Ui.chatTime(it.date));
 
         TextView snippet = (TextView) v.findViewById(R.id.snippet);
-        String draft = drafts.get(it.threadKey);
+        String draft = it.messageId > 0 ? null : drafts.get(it.threadKey);
         if (draft != null && draft.trim().length() > 0) {
             String flat = draft.replace('\n', ' ').replace('\r', ' ').trim();
             snippet.setText(L.t("Черновик: ") + flat);
@@ -115,6 +119,19 @@ public class ChatAdapter extends BaseAdapter {
             snippet.setTextColor(it.unread > 0 ? Ui.attr(ctx, R.attr.c_text)
                     : Ui.attr(ctx, R.attr.c_text2));
             snippet.setTypeface(null, it.unread > 0 ? Typeface.BOLD : Typeface.NORMAL);
+            if (it.hlStart >= 0 && it.hlEnd > it.hlStart) {
+                CharSequence base = snippet.getText();
+                if (it.hlEnd <= base.length()) {
+                    SpannableStringBuilder sb = new SpannableStringBuilder(base);
+                    int accent = Ui.attr(ctx, R.attr.c_accent);
+                    int bg = (accent & 0x00FFFFFF) | 0x66000000;
+                    sb.setSpan(new BackgroundColorSpan(bg), it.hlStart, it.hlEnd,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    sb.setSpan(new StyleSpan(Typeface.BOLD), it.hlStart, it.hlEnd,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    snippet.setText(sb);
+                }
+            }
         }
 
         TextView badge = (TextView) v.findViewById(R.id.badge);

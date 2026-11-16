@@ -13,5 +13,10 @@ public class ChatItem {
     public String accountEmail = "";
     public boolean outgoing;
     public boolean pinned;
+    /** Для результатов поиска: письмо, а не ветка. */
+    public long messageId;
+    /** Границы подсветки найденного слова в snippet (-1 — нет). */
+    public int hlStart = -1;
+    public int hlEnd = -1;
     public boolean muted;
 }

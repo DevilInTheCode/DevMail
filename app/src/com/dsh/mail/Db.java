@@ -635,6 +635,97 @@ public class Db extends SQLiteOpenHelper {
         return chatRows(cond.toString(), keys.toArray(new String[0]), limit);
     }
 
+    /** Схлопывает пробелы, сохраняя регистр (для показа сниппета). */
+    private static String flat(String v) {
+        if (v == null) return "";
+        StringBuilder b = new StringBuilder(v.length());
+        boolean space = false;
+        for (int i = 0; i < v.length(); i++) {
+            char ch = v.charAt(i);
+            if (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\u00A0') {
+                space = true;
+            } else {
+                if (space && b.length() > 0) b.append(' ');
+                space = false;
+                b.append(ch);
+            }
+        }
+        return b.toString();
+    }
+
+    private static int indexOfIgnoreCase(String text, String lowerNeedle) {
+        if (text == null || lowerNeedle == null || lowerNeedle.length() == 0) return -1;
+        return text.toLowerCase(Locale.ROOT).indexOf(lowerNeedle);
+    }
+
+    /**
+     * Поиск по письмам: возвращает сами найденные письма (а не ветки), чтобы
+     * в списке показать строку с подсвеченным словом и перейти к этому письму.
+     */
+    public List<ChatItem> searchMessages(String q, int limit) {
+        List<ChatItem> out = new ArrayList<ChatItem>();
+        String s = q == null ? "" : q.trim();
+        String needle = norm(s);
+        if (needle == null || needle.length() == 0) return out;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id, thread_key, peer_name, peer_email, subject, snippet, body, date,"
+                        + " account_id FROM messages ORDER BY date DESC", null);
+        try {
+            while (c.moveToNext()) {
+                if (out.size() >= limit) break;
+                long id = c.getLong(0);
+                String threadKey = c.getString(1);
+                if (threadKey == null) continue;
+                String peerName = c.getString(2);
+                String peerEmail = c.getString(3);
+                String subject = c.getString(4);
+                String snippet = c.getString(5);
+                String body = c.getString(6);
+                String display = null;
+                int hlStart = -1;
+                int hlEnd = -1;
+                int inSubject = indexOfIgnoreCase(flat(subject), needle);
+                if (inSubject >= 0) {
+                    String pre = L.t("Тема") + ": ";
+                    String f = flat(subject);
+                    display = pre + f;
+                    hlStart = pre.length() + inSubject;
+                    hlEnd = hlStart + needle.length();
+                } else {
+                    String f = flat(body);
+                    int off = indexOfIgnoreCase(f, needle);
+                    if (off < 0) {
+                        f = flat(snippet);
+                        off = indexOfIgnoreCase(f, needle);
+                    }
+                    if (off < 0) continue;
+                    int start = Math.max(0, off - 50);
+                    int end = Math.min(f.length(), off + needle.length() + 90);
+                    String pre = start > 0 ? "…" : "";
+                    String post = end < f.length() ? "…" : "";
+                    display = pre + f.substring(start, end) + post;
+                    hlStart = pre.length() + (off - start);
+                    hlEnd = hlStart + needle.length();
+                }
+                ChatItem it = new ChatItem();
+                it.threadKey = threadKey;
+                it.messageId = id;
+                it.name = peerName == null || peerName.trim().length() == 0
+                        ? fallbackName(threadKey) : peerName;
+                it.email = peerEmail == null ? "" : peerEmail;
+                it.snippet = display;
+                it.date = c.getLong(7);
+                it.accountId = c.getLong(8);
+                it.hlStart = hlStart;
+                it.hlEnd = hlEnd;
+                out.add(it);
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
     /** Закреплённые и заглушённые чаты: ключ -> {pinned, muted}. */
     public Map<String, int[]> chatFlags() {
         Map<String, int[]> out = new HashMap<String, int[]>();
